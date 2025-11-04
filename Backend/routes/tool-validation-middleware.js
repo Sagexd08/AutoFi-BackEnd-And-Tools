@@ -1,15 +1,6 @@
 import { body, param, validationResult } from 'express-validator';
 
-/**
- * Tool parameter schemas - defines expected parameters for each tool
- * Each schema includes:
- * - required fields
- * - field types
- * - value constraints (ranges, formats, lengths)
- * - allowed formats
- */
 const TOOL_SCHEMAS = {
-  // SDK Tools
   'sdk_initialize': {
     parameters: {},
     required: []
@@ -65,30 +56,18 @@ const TOOL_SCHEMAS = {
   }
 };
 
-/**
- * Sanitize a string value to prevent XSS and command injection
- * @param {string} value - String to sanitize
- * @returns {string} Sanitized string
- */
 function sanitizeString(value) {
   if (typeof value !== 'string') {
     return value;
   }
   
-  // Remove or escape dangerous characters
   return value
-    .replace(/[<>]/g, '') // Remove HTML brackets
-    .replace(/[`$(){}[\]]/g, '') // Remove shell command characters
-    .replace(/[;&|`$]/g, '') // Remove command injection characters
+    .replace(/[<>]/g, '')
+    .replace(/[`$(){}[\]]/g, '')
+    .replace(/[;&|`$]/g, '')
     .trim();
 }
 
-/**
- * Validate and sanitize object recursively
- * @param {any} obj - Object to sanitize
- * @param {number} depth - Current depth to prevent deep nesting
- * @returns {any} Sanitized object
- */
 function sanitizeObject(obj, depth = 0) {
   if (depth > 10) {
     throw new Error('Maximum object depth exceeded');
@@ -109,7 +88,6 @@ function sanitizeObject(obj, depth = 0) {
   if (typeof obj === 'object') {
     const sanitized = {};
     for (const [key, value] of Object.entries(obj)) {
-      // Sanitize keys too
       const safeKey = sanitizeString(key);
       sanitized[safeKey] = sanitizeObject(value, depth + 1);
     }
@@ -119,60 +97,28 @@ function sanitizeObject(obj, depth = 0) {
   return obj;
 }
 
-/**
- * Validate address format (Ethereum/Celo address)
- * @param {string} address - Address to validate
- * @returns {boolean} True if valid
- */
 function isValidAddress(address) {
   return typeof address === 'string' && /^0x[a-fA-F0-9]{40}$/.test(address);
 }
 
-/**
- * Validate hexadecimal string
- * @param {string} hex - Hex string to validate
- * @returns {boolean} True if valid
- */
 function isValidHex(hex) {
   return typeof hex === 'string' && /^0x[a-fA-F0-9]*$/.test(hex);
 }
 
-/**
- * Validate Wei amount (numeric string)
- * @param {string} amount - Amount to validate
- * @returns {boolean} True if valid
- */
 function isValidWei(amount) {
   return typeof amount === 'string' && /^\d+$/.test(amount);
 }
 
-/**
- * Validate chain ID
- * @param {string} chainId - Chain ID to validate
- * @returns {boolean} True if valid
- */
 function isValidChainId(chainId) {
   const id = parseInt(chainId, 10);
-  return !isNaN(id) && id > 0 && id < 2147483647; // Max 32-bit signed int
+  return !isNaN(id) && id > 0 && id < 2147483647;
 }
 
-/**
- * Validate alphanumeric string
- * @param {string} str - String to validate
- * @returns {boolean} True if valid
- */
 function isAlphanumeric(str) {
   return typeof str === 'string' && /^[a-zA-Z0-9_-]+$/.test(str);
 }
 
-/**
- * Validate parameter value based on schema
- * @param {any} value - Value to validate
- * @param {Object} schema - Parameter schema
- * @returns {Object} { valid: boolean, error?: string }
- */
 function validateParameter(value, schema) {
-  // Check type
   if (schema.type === 'string' && typeof value !== 'string') {
     return { valid: false, error: `Expected string, got ${typeof value}` };
   }
@@ -189,12 +135,10 @@ function validateParameter(value, schema) {
     return { valid: false, error: `Expected object, got ${typeof value}` };
   }
   
-  // Check max length for strings
   if (schema.type === 'string' && schema.maxLength && value.length > schema.maxLength) {
     return { valid: false, error: `String length exceeds maximum of ${schema.maxLength} characters` };
   }
   
-  // Check format for strings
   if (schema.type === 'string' && schema.format) {
     switch (schema.format) {
       case 'address':
@@ -225,12 +169,10 @@ function validateParameter(value, schema) {
     }
   }
   
-  // Check array length
   if (schema.type === 'array' && schema.maxLength && value.length > schema.maxLength) {
     return { valid: false, error: `Array length exceeds maximum of ${schema.maxLength} items` };
   }
   
-  // Check object depth
   if (schema.type === 'object' && schema.maxDepth) {
     const depth = getObjectDepth(value);
     if (depth > schema.maxDepth) {
@@ -241,12 +183,6 @@ function validateParameter(value, schema) {
   return { valid: true };
 }
 
-/**
- * Get object depth recursively
- * @param {any} obj - Object to check
- * @param {number} current - Current depth
- * @returns {number} Maximum depth
- */
 function getObjectDepth(obj, current = 0) {
   if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) {
     return current;
@@ -262,13 +198,8 @@ function getObjectDepth(obj, current = 0) {
   return maxDepth;
 }
 
-/**
- * Validation middleware for tool execution
- * Validates toolId and parameters before execution
- */
 export function validateToolExecution(automationSystem) {
   return [
-    // Validate toolId parameter
     param('toolId')
       .trim()
       .notEmpty()
@@ -278,7 +209,6 @@ export function validateToolExecution(automationSystem) {
       .matches(/^[a-zA-Z0-9_-]+$/)
       .withMessage('toolId contains invalid characters'),
     
-    // Validate request body
     body('parameters')
       .optional()
       .custom((value) => {
@@ -288,10 +218,8 @@ export function validateToolExecution(automationSystem) {
         return true;
       }),
     
-    // Custom validation
     async (req, res, next) => {
       try {
-        // Check validation errors from express-validator
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
           const errorMessages = errors.array().map(err => ({
@@ -315,12 +243,10 @@ export function validateToolExecution(automationSystem) {
         const { toolId } = req.params;
         const { parameters = {} } = req.body;
         
-        // Check if environment manager is available
         if (!automationSystem?.environmentManager) {
           return res.status(503).json({ error: 'Environment Manager not available' });
         }
         
-        // Get tool to verify it exists
         const tool = automationSystem.environmentManager.getTool(toolId);
         if (!tool) {
           console.error('⚠️  Tool not found:', {
@@ -332,11 +258,9 @@ export function validateToolExecution(automationSystem) {
           return res.status(404).json({ error: `Tool ${toolId} not found` });
         }
         
-        // Get schema for this tool
         const schema = TOOL_SCHEMAS[toolId];
         
         if (schema) {
-          // Validate required parameters
           for (const requiredParam of schema.required) {
             if (!(requiredParam in parameters)) {
               const errorMsg = `Missing required parameter: ${requiredParam}`;
@@ -354,11 +278,9 @@ export function validateToolExecution(automationSystem) {
             }
           }
           
-          // Validate all provided parameters (whitelist approach)
           const allowedParams = Object.keys(schema.parameters);
           const providedParams = Object.keys(parameters);
           
-          // Check for unknown parameters
           const unknownParams = providedParams.filter(param => !allowedParams.includes(param));
           if (unknownParams.length > 0) {
             const errorMsg = `Unknown parameters: ${unknownParams.join(', ')}. Allowed: ${allowedParams.join(', ') || 'none'}`;
@@ -376,7 +298,6 @@ export function validateToolExecution(automationSystem) {
             });
           }
           
-          // Validate each parameter
           const validationErrors = [];
           const sanitizedParameters = {};
           
@@ -384,10 +305,9 @@ export function validateToolExecution(automationSystem) {
             const paramSchema = schema.parameters[paramName];
             
             if (!paramSchema) {
-              continue; // Skip if not in schema (shouldn't happen due to whitelist check)
+              continue;
             }
             
-            // Validate parameter
             const validation = validateParameter(paramValue, paramSchema);
             if (!validation.valid) {
               validationErrors.push({
@@ -395,7 +315,6 @@ export function validateToolExecution(automationSystem) {
                 message: validation.error
               });
             } else {
-              // Sanitize and store valid parameter
               sanitizedParameters[paramName] = sanitizeObject(paramValue);
             }
           }
@@ -414,20 +333,16 @@ export function validateToolExecution(automationSystem) {
             });
           }
           
-          // Replace parameters with sanitized version
           req.body.parameters = sanitizedParameters;
         } else {
-          // No schema defined - apply generic validation and sanitization
           console.warn('⚠️  No schema defined for tool, applying generic validation:', {
             toolId,
             ip: req.ip,
             timestamp: new Date().toISOString()
           });
           
-          // Sanitize all parameters
           req.body.parameters = sanitizeObject(parameters);
           
-          // Apply basic size limits
           const paramString = JSON.stringify(parameters);
           if (paramString.length > 100000) {
             console.error('⚠️  Validation failed: Parameters too large:', {
@@ -444,7 +359,6 @@ export function validateToolExecution(automationSystem) {
           }
         }
         
-        // Validation passed
         next();
         
       } catch (error) {
@@ -464,4 +378,3 @@ export function validateToolExecution(automationSystem) {
     }
   ];
 }
-

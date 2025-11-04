@@ -17,7 +17,6 @@ import { EtherscanService } from './etherscan-service.js';
 import ConsolidatedAgentSystem, { LangChainAgent } from './agents/agents.js';
 import BlockchainInterface from './blockchain-interface.js';
 import SupabaseService from './lib/supabase.js';
-// New imports for enhanced features
 import { MultiChainConfig } from '../multi-chain-config.js';
 import { ProxyServer } from '../proxy-server.js';
 import { ContractFactory } from '../contract-factory.js';
@@ -71,14 +70,12 @@ export class CombinedAutomationSystem extends EventEmitter {
     this.predictiveAnalytics = {};
     this._consolidatedAgentStarted = false;
 
-    // Initialize new enhanced components
     this.multiChainConfig = null;
     this.proxyServer = null;
     this.contractFactory = null;
     this.monitoringSystem = null;
     this.postmanProtocol = null;
     
-    // New architecture components
     this.environmentManager = null;
     this.codeGenerator = null;
     this.rebalancerSystem = null;
@@ -119,7 +116,6 @@ export class CombinedAutomationSystem extends EventEmitter {
       enableGasOptimization: process.env.ENABLE_GAS_OPTIMIZATION === 'true',
       enableMCP: process.env.ENABLE_MCP !== 'false',
       enableAIAgents: process.env.ENABLE_AI_AGENTS !== 'false',
-      // Enhanced features configuration
       enableMultiChain: process.env.ENABLE_MULTI_CHAIN !== 'false',
       enableProxy: process.env.ENABLE_PROXY === 'true',
       enableMonitoring: process.env.ENABLE_MONITORING !== 'false',
@@ -833,11 +829,6 @@ export class CombinedAutomationSystem extends EventEmitter {
     return 'traditional';
   }
 
-  /**
-   * Route request to Code Generator
-   * @param {Object} parameters - Code generation parameters
-   * @returns {Promise<Object>} Code generation result
-   */
   async generateCode(parameters) {
     if (!this.codeGenerator) {
       throw new Error('Code Generator not initialized');
@@ -1227,7 +1218,6 @@ Guidelines:
   async initializeEnhancedFeatures() {
     console.log('🚀 Initializing Enhanced Features...');
     
-    // Initialize Multi-Chain Configuration
     if (this.config.enableMultiChain) {
       try {
         this.multiChainConfig = new MultiChainConfig();
@@ -1237,7 +1227,6 @@ Guidelines:
       }
     }
 
-    // Initialize Contract Factory
     if (this.config.enableContractFactory && this.multiChainConfig) {
       try {
         this.contractFactory = new ContractFactory(this.multiChainConfig);
@@ -1247,7 +1236,6 @@ Guidelines:
       }
     }
 
-    // Initialize Monitoring System
     if (this.config.enableMonitoring) {
       try {
         this.monitoringSystem = new MonitoringSystem({
@@ -1262,7 +1250,6 @@ Guidelines:
       }
     }
 
-    // Initialize Postman Protocol
     if (this.config.enableTesting) {
       try {
         this.postmanProtocol = new PostmanProtocol({
@@ -1274,7 +1261,6 @@ Guidelines:
       }
     }
 
-    // Initialize Environment Manager
     try {
       this.environmentManager = new EnvironmentManager({
         enableAutoFiSDK: true,
@@ -1286,7 +1272,6 @@ Guidelines:
       console.error('❌ Failed to initialize Environment Manager:', error);
     }
 
-    // Initialize Code Generator
     try {
       this.codeGenerator = new CodeGenerator({
         enableCompilation: true,
@@ -1302,7 +1287,6 @@ Guidelines:
       console.error('❌ Failed to initialize Code Generator:', error);
     }
 
-    // Initialize Rebalancer System
     try {
       this.rebalancerSystem = new RebalancerSystem({
         enableAutoRebalancing: true,
@@ -1338,7 +1322,6 @@ Guidelines:
       }
     }
 
-    // Initialize Proxy Server
     if (this.config.enableProxy) {
       try {
         this.proxyServer = new ProxyServer({
@@ -1359,15 +1342,12 @@ Guidelines:
       try {
         const { createApiRoutes } = await import('../routes/api-routes.js');
         const routes = createApiRoutes(this);
-        // Apply rate limiting globally, then specific routes
         this.app.use('/api', routes);
         
-        // Health routes don't need rate limiting
         try {
           const healthRouter = await import('../routes/health.js');
           this.app.use('/health', healthRouter.default);
         } catch {
-          // Health routes optional
         }
         console.log('✅ Enhanced API routes added');
       } catch (error) {
@@ -1384,11 +1364,10 @@ Guidelines:
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-Session-ID', 'X-Request-ID', 'X-Correlation-ID', 'X-API-Key']
     }));
-
-    // Global rate limiting (per-route rate limiting is handled in routes)
+    
     const limiter = rateLimit({
-      windowMs: 15 * 60 * 1000, // 15 minutes
-      max: 200, // Global limit: 200 requests per 15 minutes per IP
+      windowMs: 15 * 60 * 1000,
+      max: 200,
       message: {
         success: false,
         error: {
@@ -1401,12 +1380,10 @@ Guidelines:
       legacyHeaders: false,
     });
     this.app.use(limiter);
-
-    // Request logging middleware (if available)
+    
     import('../utils/logger.js').then(({ logger, requestLogger }) => {
       this.app.use(requestLogger(logger));
     }).catch(() => {
-      // Fallback to simple logging
       this.app.use((req, res, next) => {
         console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - ${req.ip}`);
         next();
@@ -1416,11 +1393,9 @@ Guidelines:
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true }));
     
-    // Error handling middleware (if available)
     import('../middleware/error-handler.js').then(({ errorHandler }) => {
       this.app.use(errorHandler);
     }).catch(() => {
-      // Fallback error handler
       this.app.use((err, req, res, next) => {
         res.status(err.status || 500).json({
           success: false,

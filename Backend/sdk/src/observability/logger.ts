@@ -1,8 +1,7 @@
 import type { SDKConfig } from '../types/config';
+import { DataMasker, type MaskingConfig } from '../utils/data-masker';
 
-/**
- * Log levels.
- */
+
 export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
@@ -10,9 +9,7 @@ export enum LogLevel {
   ERROR = 3,
 }
 
-/**
- * Structured log entry.
- */
+
 export interface LogEntry {
   level: LogLevel;
   message: string;
@@ -22,9 +19,7 @@ export interface LogEntry {
   correlationId?: string;
 }
 
-/**
- * Logger interface.
- */
+
 export interface Logger {
   debug(message: string, context?: Record<string, unknown>): void;
   info(message: string, context?: Record<string, unknown>): void;
@@ -32,21 +27,129 @@ export interface Logger {
   error(message: string, error?: Error, context?: Record<string, unknown>): void;
 }
 
-/**
- * Structured logger implementation.
- */
+
+export interface LoggerConfig extends Partial<SDKConfig> {
+  enableMasking?: boolean;
+  maskingConfig?: MaskingConfig;
+  useWinston?: boolean;
+  usePino?: boolean;
+  winstonConfig?: unknown;
+  pinoConfig?: unknown;
+}
+
+
 export class StructuredLogger implements Logger {
   private readonly logLevel: LogLevel;
   private correlationId?: string;
+  private readonly enableMasking: boolean;
+  private readonly masker: DataMasker;
+  private winstonLogger?: any;
+  private pinoLogger?: any;
 
-  constructor(config: SDKConfig) {
+  constructor(config: LoggerConfig = {}) {
     const level = config.logLevel ?? 'info';
     this.logLevel = this.parseLogLevel(level);
+    this.enableMasking = config.enableMasking ?? true;
+    
+    
+    this.masker = new DataMasker(config.maskingConfig || {
+      strategy: process.env.NODE_ENV === 'production' ? 'full' : 'partial',
+    });
+
+    
+    if (config.useWinston) {
+      this.initializeWinston(config.winstonConfig);
+    } else if (config.usePino) {
+      this.initializePino(config.pinoConfig);
+    }
   }
 
-  /**
-   * Parses log level string to enum.
-   */
+  
+  private initializeWinston(config?: unknown): void {
+    try {
+      
+      const winston = require('winston');
+      this.winstonLogger = winston.createLogger(config || {
+        level: this.getLogLevelString(),
+        format: winston.format.combine(
+          winston.format.timestamp(),
+          winston.format.json(),
+          winston.format((info) => {
+            
+            if (this.enableMasking && info.message) {
+              info.message = this.masker.sanitizeString(String(info.message));
+            }
+            if (this.enableMasking && info.meta) {
+              info.meta = this.masker.maskObject(info.meta);
+            }
+            return info;
+          })()
+        ),
+        transports: [
+          new winston.transports.Console(),
+        ],
+      });
+    } catch (error) {
+      console.warn('Winston not available, falling back to console logging:', error);
+    }
+  }
+
+  
+  private initializePino(config?: unknown): void {
+    try {
+      
+      const pino = require('pino');
+      const pinoConfig = config || {
+        level: this.getLogLevelString(),
+        formatters: {
+          level: (label: string) => ({ level: label }),
+        },
+        serializers: {
+          error: (err: Error) => {
+            if (this.enableMasking) {
+              return this.masker.sanitizeError(err);
+            }
+            return err;
+          },
+        },
+      };
+      
+      
+      if (this.enableMasking) {
+        pinoConfig.serializers = {
+          ...pinoConfig.serializers,
+          '*': (value: unknown) => {
+            if (typeof value === 'object' && value !== null) {
+              return this.masker.maskObject(value as Record<string, unknown>);
+            }
+            return value;
+          },
+        };
+      }
+      
+      this.pinoLogger = pino(pinoConfig);
+    } catch (error) {
+      console.warn('Pino not available, falling back to console logging:', error);
+    }
+  }
+
+  
+  private getLogLevelString(): string {
+    switch (this.logLevel) {
+      case LogLevel.DEBUG:
+        return 'debug';
+      case LogLevel.INFO:
+        return 'info';
+      case LogLevel.WARN:
+        return 'warn';
+      case LogLevel.ERROR:
+        return 'error';
+      default:
+        return 'info';
+    }
+  }
+
+  
   private parseLogLevel(level: string): LogLevel {
     switch (level.toLowerCase()) {
       case 'debug':
@@ -62,51 +165,37 @@ export class StructuredLogger implements Logger {
     }
   }
 
-  /**
-   * Sets the correlation ID for request tracking.
-   */
+  
   setCorrelationId(id: string): void {
     this.correlationId = id;
   }
 
-  /**
-   * Gets the current correlation ID.
-   */
+  
   getCorrelationId(): string | undefined {
     return this.correlationId;
   }
 
-  /**
-   * Logs a message at debug level.
-   */
+  
   debug(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.DEBUG, message, undefined, context);
   }
 
-  /**
-   * Logs a message at info level.
-   */
+  
   info(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.INFO, message, undefined, context);
   }
 
-  /**
-   * Logs a message at warn level.
-   */
+  
   warn(message: string, context?: Record<string, unknown>): void {
     this.log(LogLevel.WARN, message, undefined, context);
   }
 
-  /**
-   * Logs a message at error level.
-   */
+  
   error(message: string, error?: Error, context?: Record<string, unknown>): void {
     this.log(LogLevel.ERROR, message, error, context);
   }
 
-  /**
-   * Internal logging method.
-   */
+  
   private log(
     level: LogLevel,
     message: string,
@@ -117,17 +206,51 @@ export class StructuredLogger implements Logger {
       return;
     }
 
+    
+    let sanitizedMessage = message;
+    let sanitizedContext = context;
+    let sanitizedError = error;
+
+    if (this.enableMasking) {
+      sanitizedMessage = this.masker.sanitizeString(message);
+      sanitizedContext = context ? this.masker.maskObject(context) : undefined;
+      sanitizedError = error ? this.masker.sanitizeError(error) : undefined;
+    }
+
     const entry: LogEntry = {
       level,
-      message,
+      message: sanitizedMessage,
       timestamp: new Date().toISOString(),
       context: {
-        ...context,
+        ...sanitizedContext,
         ...(this.correlationId && { correlationId: this.correlationId }),
       },
-      ...(error && { error }),
+      ...(sanitizedError && { error: sanitizedError }),
     };
 
+    
+    if (this.winstonLogger) {
+      const winstonLevel = this.getLogLevelString();
+      this.winstonLogger.log({
+        level: winstonLevel,
+        message: sanitizedMessage,
+        ...entry.context,
+        ...(sanitizedError && { error: sanitizedError }),
+      });
+      return;
+    }
+
+    if (this.pinoLogger) {
+      const pinoMethod = this.pinoLogger[this.getLogLevelString()].bind(this.pinoLogger);
+      pinoMethod({
+        msg: sanitizedMessage,
+        ...entry.context,
+        ...(sanitizedError && { err: sanitizedError }),
+      });
+      return;
+    }
+
+    
     const logOutput = JSON.stringify(entry, null, 2);
 
     switch (level) {
@@ -144,5 +267,15 @@ export class StructuredLogger implements Logger {
         console.error(logOutput);
         break;
     }
+  }
+
+  
+  setMasking(enabled: boolean): void {
+    (this as any).enableMasking = enabled;
+  }
+
+  
+  updateMaskingConfig(config: Partial<MaskingConfig>): void {
+    this.masker.updateConfig(config);
   }
 }

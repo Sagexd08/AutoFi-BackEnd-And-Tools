@@ -1,13 +1,6 @@
-/**
- * Validation middleware for Express using Zod schemas.
- */
 
-/**
- * Creates a validation middleware for request body validation.
- * 
- * @param {import('zod').ZodSchema} schema - Zod schema to validate against
- * @returns {Function} Express middleware function
- */
+
+
 export function validateBody(schema) {
   return async (req, res, next) => {
     try {
@@ -30,12 +23,7 @@ export function validateBody(schema) {
   };
 }
 
-/**
- * Creates a validation middleware for query parameters validation.
- * 
- * @param {import('zod').ZodSchema} schema - Zod schema to validate against
- * @returns {Function} Express middleware function
- */
+
 export function validateQuery(schema) {
   return async (req, res, next) => {
     try {
@@ -58,12 +46,7 @@ export function validateQuery(schema) {
   };
 }
 
-/**
- * Creates a validation middleware for route parameters validation.
- * 
- * @param {import('zod').ZodSchema} schema - Zod schema to validate against
- * @returns {Function} Express middleware function
- */
+
 export function validateParams(schema) {
   return async (req, res, next) => {
     try {

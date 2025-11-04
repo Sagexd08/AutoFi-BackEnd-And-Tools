@@ -2,16 +2,12 @@ import type { Plugin, PluginRegistry, SDKConfig } from '../types/config';
 import { SDKError } from '../errors';
 import { ERROR_CODES } from '../constants/errors';
 
-/**
- * Plugin registry implementation.
- */
+
 export class DefaultPluginRegistry implements PluginRegistry {
   private plugins = new Map<string, Plugin>();
   private initialized = false;
 
-  /**
-   * Registers a plugin.
-   */
+  
   register(plugin: Plugin): void {
     if (this.plugins.has(plugin.metadata.name)) {
       throw new SDKError(
@@ -21,41 +17,33 @@ export class DefaultPluginRegistry implements PluginRegistry {
       );
     }
 
-    // Check dependencies
+    
     this.validateDependencies(plugin);
 
     this.plugins.set(plugin.metadata.name, plugin);
   }
 
-  /**
-   * Unregisters a plugin.
-   */
+  
   unregister(name: string): void {
     const plugin = this.plugins.get(name);
     if (plugin) {
       this.plugins.delete(name);
-      // Check if other plugins depend on this one
+      
       this.validateDependents(name);
     }
   }
 
-  /**
-   * Gets a plugin by name.
-   */
+  
   get(name: string): Plugin | undefined {
     return this.plugins.get(name);
   }
 
-  /**
-   * Gets all registered plugins.
-   */
+  
   getAll(): readonly Plugin[] {
     return Array.from(this.plugins.values());
   }
 
-  /**
-   * Initializes all plugins in dependency order.
-   */
+  
   async initializeAll(config: SDKConfig): Promise<void> {
     if (this.initialized) {
       return;
@@ -80,9 +68,7 @@ export class DefaultPluginRegistry implements PluginRegistry {
     this.initialized = true;
   }
 
-  /**
-   * Starts all plugins.
-   */
+  
   async startAll(): Promise<void> {
     const sortedPlugins = this.sortByDependencies();
 
@@ -101,9 +87,7 @@ export class DefaultPluginRegistry implements PluginRegistry {
     }
   }
 
-  /**
-   * Stops all plugins in reverse dependency order.
-   */
+  
   async stopAll(): Promise<void> {
     const sortedPlugins = this.sortByDependencies().reverse();
 
@@ -112,16 +96,14 @@ export class DefaultPluginRegistry implements PluginRegistry {
         try {
           await plugin.onStop();
         } catch (error) {
-          // Log error but continue stopping other plugins
+          
           console.error(`Error stopping plugin "${plugin.metadata.name}":`, error);
         }
       }
     }
   }
 
-  /**
-   * Destroys all plugins in reverse dependency order.
-   */
+  
   async destroyAll(): Promise<void> {
     const sortedPlugins = this.sortByDependencies().reverse();
 
@@ -130,7 +112,7 @@ export class DefaultPluginRegistry implements PluginRegistry {
         try {
           await plugin.onDestroy();
         } catch (error) {
-          // Log error but continue destroying other plugins
+          
           console.error(`Error destroying plugin "${plugin.metadata.name}":`, error);
         }
       }
@@ -140,16 +122,14 @@ export class DefaultPluginRegistry implements PluginRegistry {
     this.initialized = false;
   }
 
-  /**
-   * Validates plugin dependencies.
-   */
+  
   private validateDependencies(plugin: Plugin): void {
     const deps = plugin.metadata.dependencies;
     if (!deps) {
       return;
     }
 
-    // Check required dependencies
+    
     if (deps.requires) {
       for (const depName of deps.requires) {
         if (!this.plugins.has(depName)) {
@@ -162,7 +142,7 @@ export class DefaultPluginRegistry implements PluginRegistry {
       }
     }
 
-    // Warn about optional dependencies
+    
     if (deps.optional) {
       for (const depName of deps.optional) {
         if (!this.plugins.has(depName)) {
@@ -174,9 +154,7 @@ export class DefaultPluginRegistry implements PluginRegistry {
     }
   }
 
-  /**
-   * Validates that no plugins depend on the given plugin.
-   */
+  
   private validateDependents(pluginName: string): void {
     for (const plugin of this.plugins.values()) {
       const deps = plugin.metadata.dependencies;
@@ -188,9 +166,7 @@ export class DefaultPluginRegistry implements PluginRegistry {
     }
   }
 
-  /**
-   * Sorts plugins by dependency order using topological sort.
-   */
+  
   private sortByDependencies(): Plugin[] {
     const plugins = Array.from(this.plugins.values());
     const sorted: Plugin[] = [];

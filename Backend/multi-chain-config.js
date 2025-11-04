@@ -23,7 +23,6 @@ export class MultiChainConfig {
   }
 
   initializeChains() {
-    // Ethereum Mainnet
     this.supportedChains.set('ethereum', {
       id: 'ethereum',
       name: 'Ethereum',
@@ -43,11 +42,10 @@ export class MultiChainConfig {
       isTestnet: false,
       priority: 1,
       gasPriceMultiplier: 1.0,
-      maxGasPrice: '100000000000', // 100 gwei
-      minGasPrice: '20000000000'   // 20 gwei
+      maxGasPrice: '100000000000',
+      minGasPrice: '20000000000'
     });
 
-    // Polygon
     this.supportedChains.set('polygon', {
       id: 'polygon',
       name: 'Polygon',
@@ -67,11 +65,10 @@ export class MultiChainConfig {
       isTestnet: false,
       priority: 2,
       gasPriceMultiplier: 0.8,
-      maxGasPrice: '500000000000', // 500 gwei
-      minGasPrice: '30000000000'   // 30 gwei
+      maxGasPrice: '500000000000',
+      minGasPrice: '30000000000'
     });
 
-    // BSC
     this.supportedChains.set('bsc', {
       id: 'bsc',
       name: 'Binance Smart Chain',
@@ -91,11 +88,10 @@ export class MultiChainConfig {
       isTestnet: false,
       priority: 3,
       gasPriceMultiplier: 0.5,
-      maxGasPrice: '20000000000', // 20 gwei
-      minGasPrice: '5000000000'   // 5 gwei
+      maxGasPrice: '20000000000',
+      minGasPrice: '5000000000'
     });
 
-    // Arbitrum
     this.supportedChains.set('arbitrum', {
       id: 'arbitrum',
       name: 'Arbitrum One',
@@ -115,11 +111,10 @@ export class MultiChainConfig {
       isTestnet: false,
       priority: 4,
       gasPriceMultiplier: 0.3,
-      maxGasPrice: '1000000000', // 1 gwei
-      minGasPrice: '100000000'   // 0.1 gwei
+      maxGasPrice: '1000000000',
+      minGasPrice: '100000000'
     });
 
-    // Optimism
     this.supportedChains.set('optimism', {
       id: 'optimism',
       name: 'Optimism',
@@ -139,11 +134,10 @@ export class MultiChainConfig {
       isTestnet: false,
       priority: 5,
       gasPriceMultiplier: 0.2,
-      maxGasPrice: '1000000000', // 1 gwei
-      minGasPrice: '100000000'   // 0.1 gwei
+      maxGasPrice: '1000000000',
+      minGasPrice: '100000000'
     });
 
-    // Celo Mainnet
     this.supportedChains.set('celo', {
       id: 'celo',
       name: 'Celo',
@@ -163,11 +157,10 @@ export class MultiChainConfig {
       isTestnet: false,
       priority: 6,
       gasPriceMultiplier: 0.7,
-      maxGasPrice: '5000000000', // 5 gwei
-      minGasPrice: '1000000000'  // 1 gwei
+      maxGasPrice: '5000000000',
+      minGasPrice: '1000000000'
     });
 
-    // Celo Alfajores (Testnet)
     this.supportedChains.set('celo-alfajores', {
       id: 'celo-alfajores',
       name: 'Celo Alfajores',
@@ -186,11 +179,10 @@ export class MultiChainConfig {
       isTestnet: true,
       priority: 7,
       gasPriceMultiplier: 1.0,
-      maxGasPrice: '10000000000', // 10 gwei
-      minGasPrice: '1000000000'   // 1 gwei
+      maxGasPrice: '10000000000',
+      minGasPrice: '1000000000'
     });
 
-    // Base
     this.supportedChains.set('base', {
       id: 'base',
       name: 'Base',
@@ -210,11 +202,10 @@ export class MultiChainConfig {
       isTestnet: false,
       priority: 8,
       gasPriceMultiplier: 0.4,
-      maxGasPrice: '1000000000', // 1 gwei
-      minGasPrice: '100000000'   // 0.1 gwei
+      maxGasPrice: '1000000000',
+      minGasPrice: '100000000'
     });
 
-    // Avalanche
     this.supportedChains.set('avalanche', {
       id: 'avalanche',
       name: 'Avalanche C-Chain',
@@ -234,11 +225,10 @@ export class MultiChainConfig {
       isTestnet: false,
       priority: 9,
       gasPriceMultiplier: 0.6,
-      maxGasPrice: '50000000000', // 50 gwei
-      minGasPrice: '25000000000'  // 25 gwei
+      maxGasPrice: '50000000000',
+      minGasPrice: '25000000000'
     });
 
-    // Initialize health status for all chains
     for (const [chainId, chain] of this.supportedChains) {
       this.chainHealth.set(chainId, {
         status: 'unknown',
@@ -309,7 +299,6 @@ export class MultiChainConfig {
       throw new Error(`Unsupported chain: ${chainId}`);
     }
 
-    // Try RPC URLs in order of preference
     for (const rpcUrl of chain.rpcUrls) {
       try {
         const client = createPublicClient({
@@ -321,7 +310,6 @@ export class MultiChainConfig {
         await client.getBlockNumber();
         const responseTime = Date.now() - startTime;
         
-        // Update health metrics
         const health = this.chainHealth.get(chainId);
         health.status = 'healthy';
         health.lastChecked = new Date();
@@ -336,7 +324,6 @@ export class MultiChainConfig {
       }
     }
 
-    // If all RPCs fail, mark as unhealthy and return the first one
     const health = this.chainHealth.get(chainId);
     health.status = 'unhealthy';
     health.lastChecked = new Date();
@@ -426,7 +413,6 @@ export class MultiChainConfig {
     return health;
   }
 
-  // Get the best chain for a specific operation based on gas costs, speed, etc.
   getBestChainForOperation(operation, preferences = {}) {
     const healthyChains = this.getHealthyChains();
     
@@ -435,10 +421,8 @@ export class MultiChainConfig {
       if (preferredChain) return preferredChain;
     }
 
-    // Sort by priority and gas cost
     return healthyChains
       .sort((a, b) => {
-        // Lower gas price multiplier = better
         const gasScoreA = a.gasPriceMultiplier;
         const gasScoreB = b.gasPriceMultiplier;
         
@@ -446,12 +430,10 @@ export class MultiChainConfig {
           return gasScoreA - gasScoreB;
         }
         
-        // Lower priority number = higher priority
         return a.priority - b.priority;
       })[0];
   }
 
-  // Add custom chain configuration
   addCustomChain(chainConfig) {
     this.supportedChains.set(chainConfig.id, {
       ...chainConfig,
@@ -471,7 +453,6 @@ export class MultiChainConfig {
     });
   }
 
-  // Remove custom chain
   removeCustomChain(chainId) {
     this.supportedChains.delete(chainId);
     this.chainHealth.delete(chainId);

@@ -1,10 +1,6 @@
 #!/usr/bin/env node
 
-/**
- * Celo AI SDK CLI Tool
- * 
- * Provides command-line interface for the Celo AI SDK.
- */
+
 
 import { Command } from 'commander';
 import fs from 'fs/promises';
@@ -21,18 +17,16 @@ program
   .description('CLI tool for Celo AI SDK - Multi-chain blockchain automation')
   .version('1.0.0');
 
-/**
- * Dynamic import of SDK to handle cases where it's not installed
- */
+
 async function getSDK() {
   try {
-    // Try to import from dist (built version)
+    
     const sdkPath = path.join(__dirname, '../dist/index.js');
     const sdk = await import(sdkPath);
     return sdk.CeloAISDK;
   } catch {
     try {
-      // Try to import from node_modules
+      
       const { CeloAISDK } = await import('@celo-ai/sdk');
       return CeloAISDK;
     } catch {
@@ -43,16 +37,14 @@ async function getSDK() {
   }
 }
 
-/**
- * Load configuration from file or environment.
- */
+
 async function loadConfig() {
   const configPath = path.join(process.cwd(), '.celo-ai.config.json');
   try {
     const configData = await fs.readFile(configPath, 'utf-8');
     return JSON.parse(configData);
   } catch {
-    // Fallback to environment variables
+    
     return {
       apiKey: process.env.CELO_AI_API_KEY,
       privateKey: process.env.CELO_AI_PRIVATE_KEY,
@@ -63,9 +55,7 @@ async function loadConfig() {
   }
 }
 
-/**
- * Initialize SDK configuration.
- */
+
 program
   .command('init')
   .description('Initialize SDK configuration')
@@ -91,9 +81,7 @@ program
     }
   });
 
-/**
- * Chain management commands.
- */
+
 const chainCmd = program
   .command('chain')
   .description('Chain management commands');
@@ -149,9 +137,7 @@ chainCmd
     }
   });
 
-/**
- * Agent management commands.
- */
+
 const agentCmd = program
   .command('agent')
   .description('AI agent management commands');
@@ -235,9 +221,7 @@ agentCmd
     }
   });
 
-/**
- * Transaction commands.
- */
+
 const txCmd = program
   .command('tx')
   .description('Transaction commands');
@@ -282,9 +266,7 @@ txCmd
     }
   });
 
-/**
- * Contract commands.
- */
+
 const contractCmd = program
   .command('contract')
   .description('Contract management commands');
@@ -304,9 +286,9 @@ contractCmd
       await sdk.initialize();
 
       const source = await fs.readFile(options.source, 'utf-8');
-      // In a real implementation, you would compile the contract here
-      const abi = []; // Placeholder
-      const bytecode = '0x'; // Placeholder
+      
+      const abi = []; 
+      const bytecode = '0x'; 
 
       console.log('\n📦 Deploying contract...');
       const deployment = await sdk.deployContract(
@@ -334,9 +316,7 @@ contractCmd
     }
   });
 
-/**
- * Health check command.
- */
+
 program
   .command('health')
   .description('Check SDK health')
@@ -360,5 +340,5 @@ program
     }
   });
 
-// Parse command line arguments
+
 program.parse(process.argv);

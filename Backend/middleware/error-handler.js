@@ -1,11 +1,6 @@
 import { BackendError } from '../utils/errors.js';
 
-/**
- * Error handler middleware for Express.
- * Standardizes error responses and handles different error types.
- */
 export function errorHandler(err, req, res, next) {
-  // Log the error
   console.error('Error:', {
     message: err.message,
     stack: err.stack,
@@ -16,7 +11,6 @@ export function errorHandler(err, req, res, next) {
     ip: req.ip,
   });
 
-  // Handle known error types
   if (err instanceof BackendError) {
     const statusCode = getStatusCode(err.code);
     return res.status(statusCode).json({
@@ -31,8 +25,7 @@ export function errorHandler(err, req, res, next) {
     });
   }
 
-  // Handle validation errors (from Zod or other validators)
-  if (err.name === 'ZodError' || err.errors) {
+  if (err.name === 'ZodError' || (err.name === 'ValidationError' && err.errors)) {
     return res.status(400).json({
       success: false,
       error: {
@@ -44,9 +37,8 @@ export function errorHandler(err, req, res, next) {
     });
   }
 
-  // Handle default errors
   const statusCode = err.statusCode || err.status || 500;
-  res.status(statusCode).json({
+  return res.status(statusCode).json({
     success: false,
     error: {
       code: 'INTERNAL_ERROR',
@@ -59,9 +51,6 @@ export function errorHandler(err, req, res, next) {
   });
 }
 
-/**
- * Gets HTTP status code from error code.
- */
 function getStatusCode(code) {
   const statusMap = {
     VALIDATION_ERROR: 400,
@@ -77,9 +66,6 @@ function getStatusCode(code) {
   return statusMap[code] || 500;
 }
 
-/**
- * Async error wrapper for Express route handlers.
- */
 export function asyncHandler(fn) {
   return (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);

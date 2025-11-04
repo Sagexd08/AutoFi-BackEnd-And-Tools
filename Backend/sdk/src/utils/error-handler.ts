@@ -1,30 +1,30 @@
 import { SDKError, isSDKError, extractErrorInfo } from '../errors';
 import { ERROR_CODES } from '../constants/errors';
+import { DataMasker, type MaskingConfig } from './data-masker';
 
-/**
- * Error handler utility for managing and tracking errors.
- * Provides error counting, categorization, and recovery strategies.
- */
+
 export class ErrorHandler {
   private static instance: ErrorHandler;
   private errorCount: Map<string, number> = new Map();
   private errorHistory: SDKError[] = [];
   private readonly maxHistorySize: number = 1000;
+  private readonly masker: DataMasker;
+  private enableMasking: boolean = true;
 
-  static getInstance(): ErrorHandler {
+  constructor(maskingConfig?: MaskingConfig) {
+    this.masker = new DataMasker(maskingConfig || {
+      strategy: process.env.NODE_ENV === 'production' ? 'full' : 'partial',
+    });
+  }
+
+  static getInstance(maskingConfig?: MaskingConfig): ErrorHandler {
     if (!ErrorHandler.instance) {
-      ErrorHandler.instance = new ErrorHandler();
+      ErrorHandler.instance = new ErrorHandler(maskingConfig);
     }
     return ErrorHandler.instance;
   }
 
-  /**
-   * Handles an error, tracking it and extracting useful information.
-   * 
-   * @param error - The error to handle
-   * @param context - Optional context string for categorization
-   * @returns The extracted error information
-   */
+  
   handleError(error: unknown, context?: string): ReturnType<typeof extractErrorInfo> {
     const errorInfo = extractErrorInfo(error);
     const errorKey = context || errorInfo.code || 'unknown';
@@ -32,25 +32,54 @@ export class ErrorHandler {
     const currentCount = this.errorCount.get(errorKey) ?? 0;
     this.errorCount.set(errorKey, currentCount + 1);
     
-    // Store SDK errors in history
+    
     if (isSDKError(error)) {
-      this.addToHistory(error);
+      const errorToStore = this.enableMasking 
+        ? this.sanitizeSDKError(error)
+        : error;
+      this.addToHistory(errorToStore);
     }
     
-    // Log the error
-    const logMessage = `[${errorKey}] ${errorInfo.message}`;
+    
+    let logMessage = `[${errorKey}] ${errorInfo.message}`;
+    if (this.enableMasking) {
+      logMessage = this.masker.sanitizeString(logMessage);
+    }
+    
     if (errorInfo.recoverable) {
       console.warn(logMessage);
     } else {
       console.error(logMessage);
     }
     
+    
+    if (this.enableMasking) {
+      return {
+        ...errorInfo,
+        message: this.masker.sanitizeString(errorInfo.message),
+        context: errorInfo.context ? this.masker.maskObject(errorInfo.context) : undefined,
+      };
+    }
+    
     return errorInfo;
   }
 
-  /**
-   * Adds an error to the history, maintaining max size.
-   */
+  
+  private sanitizeSDKError(error: SDKError): SDKError {
+    const sanitized = new SDKError(
+      this.masker.sanitizeString(error.message),
+      error.code,
+      {
+        ...error.context,
+        ...(error.context && { context: this.masker.maskObject(error.context) }),
+      },
+      error.recoverable,
+      error.timestamp
+    );
+    return sanitized;
+  }
+
+  
   private addToHistory(error: SDKError): void {
     this.errorHistory.push(error);
     if (this.errorHistory.length > this.maxHistorySize) {
@@ -58,9 +87,7 @@ export class ErrorHandler {
     }
   }
 
-  /**
-   * Gets the count of errors for a specific context or code.
-   */
+  
   getErrorCount(context?: string): number {
     if (context) {
       return this.errorCount.get(context) ?? 0;
@@ -69,9 +96,7 @@ export class ErrorHandler {
     return Array.from(this.errorCount.values()).reduce((sum, count) => sum + count, 0);
   }
 
-  /**
-   * Gets error statistics grouped by error code.
-   */
+  
   getErrorStats(): Record<string, number> {
     const stats: Record<string, number> = {};
     for (const [key, count] of this.errorCount.entries()) {
@@ -80,9 +105,7 @@ export class ErrorHandler {
     return stats;
   }
 
-  /**
-   * Gets recent error history.
-   */
+  
   getErrorHistory(limit?: number): readonly SDKError[] {
     if (limit) {
       return this.errorHistory.slice(-limit);
@@ -90,9 +113,7 @@ export class ErrorHandler {
     return [...this.errorHistory];
   }
 
-  /**
-   * Resets error count for a specific context or all errors.
-   */
+  
   resetErrorCount(context?: string): void {
     if (context) {
       this.errorCount.delete(context);
@@ -101,16 +122,12 @@ export class ErrorHandler {
     }
   }
 
-  /**
-   * Clears error history.
-   */
+  
   clearHistory(): void {
     this.errorHistory = [];
   }
 
-  /**
-   * Checks if an error is recoverable.
-   */
+  
   isRecoverable(error: unknown): boolean {
     if (isSDKError(error)) {
       return error.recoverable;
@@ -118,9 +135,7 @@ export class ErrorHandler {
     return false;
   }
 
-  /**
-   * Gets recovery strategy suggestions for an error.
-   */
+  
   getRecoveryStrategy(error: unknown): string[] {
     const errorInfo = extractErrorInfo(error);
     const strategies: string[] = [];
@@ -143,5 +158,15 @@ export class ErrorHandler {
     }
 
     return strategies;
+  }
+
+  
+  setMasking(enabled: boolean): void {
+    this.enableMasking = enabled;
+  }
+
+  
+  updateMaskingConfig(config: Partial<MaskingConfig>): void {
+    this.masker.updateConfig(config);
   }
 }

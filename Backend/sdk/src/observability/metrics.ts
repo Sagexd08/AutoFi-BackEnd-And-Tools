@@ -1,15 +1,11 @@
-/**
- * Metric type.
- */
+
 export enum MetricType {
   COUNTER = 'counter',
   GAUGE = 'gauge',
   HISTOGRAM = 'histogram',
 }
 
-/**
- * Metric value.
- */
+
 export interface MetricValue {
   type: MetricType;
   name: string;
@@ -18,48 +14,32 @@ export interface MetricValue {
   timestamp: number;
 }
 
-/**
- * Metrics collector interface.
- */
+
 export interface MetricsCollector {
-  /**
-   * Increments a counter metric.
-   */
+  
   increment(name: string, labels?: Record<string, string>): void;
 
-  /**
-   * Sets a gauge metric value.
-   */
+  
   setGauge(name: string, value: number, labels?: Record<string, string>): void;
 
-  /**
-   * Records a histogram value.
-   */
+  
   recordHistogram(name: string, value: number, labels?: Record<string, string>): void;
 
-  /**
-   * Gets all collected metrics.
-   */
+  
   getMetrics(): readonly MetricValue[];
 
-  /**
-   * Clears all metrics.
-   */
+  
   clear(): void;
 }
 
-/**
- * In-memory metrics collector implementation.
- */
+
 export class InMemoryMetricsCollector implements MetricsCollector {
   private metrics: MetricValue[] = [];
   private counters = new Map<string, number>();
   private gauges = new Map<string, number>();
   private histograms = new Map<string, number[]>();
 
-  /**
-   * Increments a counter metric.
-   */
+  
   increment(name: string, labels?: Record<string, string>): void {
     const key = this.getKey(name, labels);
     const current = this.counters.get(key) ?? 0;
@@ -74,9 +54,7 @@ export class InMemoryMetricsCollector implements MetricsCollector {
     });
   }
 
-  /**
-   * Sets a gauge metric value.
-   */
+  
   setGauge(name: string, value: number, labels?: Record<string, string>): void {
     const key = this.getKey(name, labels);
     this.gauges.set(key, value);
@@ -90,9 +68,7 @@ export class InMemoryMetricsCollector implements MetricsCollector {
     });
   }
 
-  /**
-   * Records a histogram value.
-   */
+  
   recordHistogram(name: string, value: number, labels?: Record<string, string>): void {
     const key = this.getKey(name, labels);
     const values = this.histograms.get(key) ?? [];
@@ -108,16 +84,12 @@ export class InMemoryMetricsCollector implements MetricsCollector {
     });
   }
 
-  /**
-   * Gets all collected metrics.
-   */
+  
   getMetrics(): readonly MetricValue[] {
     return [...this.metrics];
   }
 
-  /**
-   * Gets current counter values.
-   */
+  
   getCounters(): Record<string, number> {
     const result: Record<string, number> = {};
     for (const [key, value] of this.counters.entries()) {
@@ -126,9 +98,7 @@ export class InMemoryMetricsCollector implements MetricsCollector {
     return result;
   }
 
-  /**
-   * Gets current gauge values.
-   */
+  
   getGauges(): Record<string, number> {
     const result: Record<string, number> = {};
     for (const [key, value] of this.gauges.entries()) {
@@ -137,9 +107,7 @@ export class InMemoryMetricsCollector implements MetricsCollector {
     return result;
   }
 
-  /**
-   * Gets histogram statistics.
-   */
+  
   getHistogramStats(name: string, labels?: Record<string, string>): {
     count: number;
     sum: number;
@@ -163,9 +131,7 @@ export class InMemoryMetricsCollector implements MetricsCollector {
     };
   }
 
-  /**
-   * Clears all metrics.
-   */
+  
   clear(): void {
     this.metrics = [];
     this.counters.clear();
@@ -173,9 +139,7 @@ export class InMemoryMetricsCollector implements MetricsCollector {
     this.histograms.clear();
   }
 
-  /**
-   * Generates a cache key from name and labels.
-   */
+  
   private getKey(name: string, labels?: Record<string, string>): string {
     if (!labels) {
       return name;

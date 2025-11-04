@@ -22,10 +22,8 @@ export class ContractFactory extends EventEmitter {
     const startTime = Date.now();
     
     try {
-      // Validate contract configuration
       this.validateContractConfig(contractConfig);
       
-      // Compile contract if source is provided
       let abi, bytecode;
       if (contractConfig.source) {
         const compilation = await this.compileContract(contractConfig);
@@ -36,20 +34,16 @@ export class ContractFactory extends EventEmitter {
         bytecode = contractConfig.bytecode;
       }
       
-      // Get chain client
       const client = await this.multiChainConfig.createChainClient(chainId);
       
       if (!client.walletClient) {
         throw new Error('Wallet client not available for contract deployment');
       }
       
-      // Prepare constructor arguments
       const constructorArgs = contractConfig.constructorArgs || [];
       
-      // Estimate gas for deployment
       const gasEstimate = await this.estimateDeploymentGas(bytecode, constructorArgs, client);
       
-      // Deploy contract
       const deploymentResult = await this.executeDeployment({
         bytecode,
         constructorArgs,
@@ -73,7 +67,6 @@ export class ContractFactory extends EventEmitter {
         config: contractConfig
       };
       
-      // Store deployment
       this.deployedContracts.set(deployment.contractAddress, deployment);
       this.deploymentHistory.push(deployment);
       
@@ -99,35 +92,27 @@ export class ContractFactory extends EventEmitter {
   async compileContract(contractConfig) {
     const cacheKey = this.getCacheKey(contractConfig);
     
-    // Check cache first
     if (this.compilationCache.has(cacheKey)) {
       return this.compilationCache.get(cacheKey);
     }
     
     try {
-      // Create temporary directory for compilation
       const tempDir = path.join(__dirname, 'temp', `contract_${Date.now()}`);
       await fs.mkdir(tempDir, { recursive: true });
       
-      // Write contract source
       const contractFile = path.join(tempDir, `${contractConfig.name}.sol`);
       await fs.writeFile(contractFile, contractConfig.source);
       
-      // Create hardhat config
       const hardhatConfig = this.generateHardhatConfig(contractConfig);
       await fs.writeFile(path.join(tempDir, 'hardhat.config.js'), hardhatConfig);
       
-      // Create package.json
       const packageJson = this.generatePackageJson();
       await fs.writeFile(path.join(tempDir, 'package.json'), packageJson);
       
-      // Compile using hardhat
       const compilation = await this.runHardhatCompile(tempDir);
       
-      // Cache result
       this.compilationCache.set(cacheKey, compilation);
       
-      // Cleanup
       await fs.rm(tempDir, { recursive: true, force: true });
       
       return compilation;
@@ -162,7 +147,6 @@ export class ContractFactory extends EventEmitter {
         }
         
         try {
-          // Read compiled artifacts
           const artifactsDir = path.join(contractDir, 'artifacts', 'contracts');
           const contractName = await this.findContractName(artifactsDir);
           const artifactPath = path.join(artifactsDir, `${contractName}.sol`, `${contractName}.json`);
@@ -232,8 +216,6 @@ module.exports = {
 
   async estimateDeploymentGas(bytecode, constructorArgs, client) {
     try {
-      // For now, return a default gas estimate
-      // In a real implementation, you would estimate gas properly
       return '2000000';
     } catch (error) {
       console.warn('Gas estimation failed, using default:', error.message);
@@ -243,7 +225,6 @@ module.exports = {
 
   async executeDeployment({ bytecode, constructorArgs, gasLimit, gasPrice, value, client }) {
     try {
-      // For simulation mode, return mock data
       if (process.env.NODE_ENV === 'test' || !client.walletClient) {
         return {
           contractAddress: '0x' + Array.from({length: 40}, () => 
@@ -257,17 +238,14 @@ module.exports = {
         };
       }
       
-      // Real deployment would go here
-      // This is a simplified version
       const txHash = await client.walletClient.deployContract({
-        abi: [], // Would need ABI for constructor
+        abi: [],
         bytecode: bytecode,
         args: constructorArgs,
         gas: BigInt(gasLimit),
         value: value ? parseEther(value) : 0n
       });
       
-      // Wait for transaction receipt
       const receipt = await client.publicClient.waitForTransactionReceipt({
         hash: txHash
       });
@@ -293,7 +271,6 @@ module.exports = {
       chainId,
       client,
       
-      // Contract interaction methods
       async call(method, args = []) {
         try {
           return await client.publicClient.readContract({
@@ -355,8 +332,6 @@ module.exports = {
 
   async verifyContract(contractAddress, chainId, constructorArgs = []) {
     try {
-      // Contract verification would go here
-      // This is a placeholder implementation
       console.log(`Verifying contract ${contractAddress} on ${chainId}`);
       
       return {

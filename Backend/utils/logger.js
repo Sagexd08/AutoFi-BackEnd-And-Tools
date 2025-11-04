@@ -1,10 +1,3 @@
-/**
- * Structured logging system with correlation IDs and log levels.
- */
-
-/**
- * Log levels.
- */
 export const LogLevel = {
   DEBUG: 0,
   INFO: 1,
@@ -12,9 +5,6 @@ export const LogLevel = {
   ERROR: 3,
 };
 
-/**
- * Structured logger implementation.
- */
 export class Logger {
   constructor(config = {}) {
     this.logLevel = config.logLevel || process.env.LOG_LEVEL || 'info';
@@ -22,9 +12,6 @@ export class Logger {
     this.correlationId = null;
   }
 
-  /**
-   * Parses log level string to numeric value.
-   */
   parseLogLevel(level) {
     const levelMap = {
       debug: LogLevel.DEBUG,
@@ -35,23 +22,14 @@ export class Logger {
     return levelMap[level.toLowerCase()] ?? LogLevel.INFO;
   }
 
-  /**
-   * Sets correlation ID for request tracking.
-   */
   setCorrelationId(id) {
     this.correlationId = id;
   }
 
-  /**
-   * Generates a correlation ID.
-   */
   generateCorrelationId() {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  /**
-   * Creates a log entry.
-   */
   createLogEntry(level, message, error, context) {
     return {
       level,
@@ -70,9 +48,6 @@ export class Logger {
     };
   }
 
-  /**
-   * Logs a message at debug level.
-   */
   debug(message, context) {
     if (this.levelValue <= LogLevel.DEBUG) {
       const entry = this.createLogEntry('DEBUG', message, null, context);
@@ -80,9 +55,6 @@ export class Logger {
     }
   }
 
-  /**
-   * Logs a message at info level.
-   */
   info(message, context) {
     if (this.levelValue <= LogLevel.INFO) {
       const entry = this.createLogEntry('INFO', message, null, context);
@@ -90,9 +62,6 @@ export class Logger {
     }
   }
 
-  /**
-   * Logs a message at warn level.
-   */
   warn(message, context) {
     if (this.levelValue <= LogLevel.WARN) {
       const entry = this.createLogEntry('WARN', message, null, context);
@@ -100,9 +69,6 @@ export class Logger {
     }
   }
 
-  /**
-   * Logs a message at error level.
-   */
   error(message, error, context) {
     if (this.levelValue <= LogLevel.ERROR) {
       const entry = this.createLogEntry('ERROR', message, error, context);
@@ -111,9 +77,6 @@ export class Logger {
   }
 }
 
-/**
- * Express middleware for request logging with correlation IDs.
- */
 export function requestLogger(logger) {
   return (req, res, next) => {
     const correlationId = req.headers['x-correlation-id'] || logger.generateCorrelationId();
@@ -144,7 +107,4 @@ export function requestLogger(logger) {
   };
 }
 
-/**
- * Default logger instance.
- */
 export const logger = new Logger();

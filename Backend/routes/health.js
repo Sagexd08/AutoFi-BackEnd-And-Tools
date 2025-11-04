@@ -3,9 +3,6 @@ import { logger } from '../utils/logger.js';
 
 const router = express.Router();
 
-/**
- * Basic health check endpoint.
- */
 router.get('/', (req, res) => {
   res.json({
     success: true,
@@ -15,9 +12,6 @@ router.get('/', (req, res) => {
   });
 });
 
-/**
- * Detailed health check endpoint.
- */
 router.get('/detailed', async (req, res) => {
   const health = {
     success: true,
@@ -32,9 +26,7 @@ router.get('/detailed', async (req, res) => {
     },
   };
 
-  // Check database connection
   try {
-    // Add database health check here if needed
     health.services.database = {
       status: 'healthy',
       responseTime: 0,
@@ -47,9 +39,7 @@ router.get('/detailed', async (req, res) => {
     health.status = 'degraded';
   }
 
-  // Check blockchain connection
   try {
-    // Add blockchain health check here if needed
     health.services.blockchain = {
       status: 'healthy',
       responseTime: 0,
@@ -66,12 +56,8 @@ router.get('/detailed', async (req, res) => {
   res.status(statusCode).json(health);
 });
 
-/**
- * Readiness probe endpoint.
- */
 router.get('/ready', (req, res) => {
-  // Check if the application is ready to serve traffic
-  const isReady = true; // Add readiness checks here
+  const isReady = true;
 
   if (isReady) {
     res.json({
@@ -88,11 +74,7 @@ router.get('/ready', (req, res) => {
   }
 });
 
-/**
- * Liveness probe endpoint.
- */
 router.get('/live', (req, res) => {
-  // Check if the application is alive
   res.json({
     success: true,
     status: 'alive',

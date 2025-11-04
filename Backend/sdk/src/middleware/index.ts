@@ -1,9 +1,4 @@
-/**
- * Middleware system for the SDK.
- * 
- * Provides request/response interceptors, logging, caching, retry logic,
- * and rate limiting capabilities.
- */
+
 
 export * from './types';
 export * from './middleware-chain';

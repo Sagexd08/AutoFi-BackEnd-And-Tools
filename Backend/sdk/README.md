@@ -10,7 +10,11 @@ A comprehensive TypeScript SDK for multi-chain blockchain automation with AI age
 - ⚖️ **Load Balancing**: Intelligent transaction routing and failover
 - 🧪 **API Testing**: Postman protocol integration for comprehensive testing
 - 🔒 **Security**: Built-in validation, error handling, and risk assessment
+- 🛡️ **Data Masking**: Automatic sanitization of sensitive data in logs and errors
+- 🔐 **Encryption**: Secure encryption utilities for sensitive data
 - 📊 **Monitoring**: Health checks, metrics, and performance tracking
+- 🌳 **Modular**: Tree-shakeable exports for optimal bundle size
+- 🔄 **CI/CD**: Automated testing and deployment pipelines
 
 ## Installation
 
@@ -19,6 +23,20 @@ npm install @celo-ai/sdk
 ```
 
 ## Quick Start
+
+### Modular Imports
+
+The SDK supports modular imports for tree-shaking and smaller bundle sizes:
+
+```typescript
+// Import only what you need
+import { CeloAISDK } from '@celo-ai/sdk';
+import { DataMasker, EncryptionUtil } from '@celo-ai/sdk/security';
+import { StructuredLogger } from '@celo-ai/sdk/modules';
+
+// Or use the main export for everything
+import { CeloAISDK, masker, security } from '@celo-ai/sdk';
+```
 
 ### Using CeloAISDK
 
@@ -372,6 +390,133 @@ celo-ai contract deploy \
 
 See [CLI.md](./CLI.md) for detailed CLI documentation.
 
+## Security & Data Masking
+
+### Data Masking
+
+The SDK automatically masks sensitive data in logs and error messages:
+
+```typescript
+import { DataMasker, masker } from '@celo-ai/sdk';
+
+// Create a custom masker
+const masker = new DataMasker({
+  strategy: 'partial', // 'full', 'partial', or 'hash'
+  maskFields: ['privateKey', 'apiKey', 'password'],
+  visibleChars: 4,
+  maskChar: '*',
+});
+
+// Mask sensitive values
+const masked = masker.maskValue('0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef');
+// Result: '0x12**********************************************cdef'
+
+// Mask objects recursively
+const maskedObj = masker.maskObject({
+  privateKey: '0x123...',
+  apiKey: 'sk_live_12345',
+  publicData: 'safe to show',
+});
+// Result: { privateKey: '0x12***', apiKey: 'sk_l***e', publicData: 'safe to show' }
+
+// Sanitize error messages
+const sanitizedError = masker.sanitizeError(error);
+```
+
+### Environment-Based Masking
+
+Configure masking based on environment:
+
+```typescript
+import { envConfig, getEnvironmentConfig } from '@celo-ai/sdk/utils/environment-config';
+
+// Get current environment config
+const config = getEnvironmentConfig();
+// Returns: { enableMasking: true, maskingStrategy: 'full', ... }
+
+// Configure logger with environment-based masking
+import { StructuredLogger } from '@celo-ai/sdk';
+const logger = new StructuredLogger({
+  enableMasking: true,
+  maskingConfig: envConfig.getMaskingConfig(),
+  useWinston: true, // Optional: Use Winston for advanced logging
+});
+```
+
+### Encryption Utilities
+
+Secure encryption for sensitive data:
+
+```typescript
+import { EncryptionUtil, security } from '@celo-ai/sdk';
+
+// Encrypt data
+const encrypted = security.encrypt('sensitive data', 'password');
+const decrypted = security.decrypt(encrypted, 'password');
+
+// Generate secure tokens
+const token = security.generateToken(32);
+const uuid = security.generateUUID();
+
+// Hash data
+const hash = security.hash('data to hash');
+```
+
+### Token Management
+
+Secure token storage and validation:
+
+```typescript
+import { TokenManager } from '@celo-ai/sdk';
+
+const tokenManager = new TokenManager();
+
+// Create token with expiration
+const token = tokenManager.createToken(
+  { userId: '123', role: 'admin' },
+  3600000 // 1 hour
+);
+
+// Validate token
+const payload = tokenManager.validateToken(token);
+
+// Revoke token
+tokenManager.revokeToken(token);
+```
+
+### GDPR Compliance
+
+Built-in GDPR compliance utilities:
+
+```typescript
+import { GDPRCompliance } from '@celo-ai/sdk';
+
+// Check if data contains PII
+const hasPII = GDPRCompliance.containsPII(userData);
+
+// Remove PII from data
+const cleaned = GDPRCompliance.removePII(userData);
+
+// Anonymize data
+const anonymized = GDPRCompliance.anonymize(userData);
+```
+
+### Secure Storage
+
+Encrypted storage for sensitive data:
+
+```typescript
+import { SecureStorage } from '@celo-ai/sdk';
+
+const storage = new SecureStorage('encryption-key');
+
+// Store encrypted data
+storage.set('apiKey', 'secret-key', 'password');
+
+// Retrieve and decrypt
+const apiKey = storage.get('apiKey', 'password');
+```
+
 ## Configuration
 
 ```typescript
@@ -392,6 +537,11 @@ interface SDKConfig {
   timeout?: number;
   retryAttempts?: number;
   retryDelay?: number;
+  // Security options
+  enableMasking?: boolean;
+  maskingConfig?: MaskingConfig;
+  useWinston?: boolean;
+  usePino?: boolean;
 }
 ```
 
@@ -479,14 +629,36 @@ npm run format
 
 ### Scripts
 
-- `npm run build` - Build the project
+**Build Scripts:**
+- `npm run build` - Build the project with TypeScript
+- `npm run build:webpack` - Build optimized bundles with Webpack
+- `npm run build:all` - Build both TypeScript and Webpack bundles
+
+**Development:**
 - `npm run dev` - Development mode with watch
-- `npm test` - Run tests
-- `npm run test:watch` - Run tests in watch mode
-- `npm run test:coverage` - Run tests with coverage
 - `npm run lint` - Run ESLint
 - `npm run lint:fix` - Fix ESLint issues
 - `npm run format` - Format code with Prettier
+- `npm run format:check` - Check code formatting
+
+**Testing:**
+- `npm test` - Run tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage
+- `npm run test:security` - Run security audit checks
+
+**Security:**
+- `npm run audit` - Run npm audit
+- `npm run audit:fix` - Fix npm audit issues
+- `npm run audit:production` - Audit production dependencies only
+- `npm run security:check` - Check for high-severity vulnerabilities
+
+**Versioning:**
+- `npm run version:patch` - Increment patch version (1.0.0 -> 1.0.1)
+- `npm run version:minor` - Increment minor version (1.0.0 -> 1.1.0)
+- `npm run version:major` - Increment major version (1.0.0 -> 2.0.0)
+
+**Other:**
 - `npm run docs` - Generate documentation
 - `npm run clean` - Clean build artifacts
 
@@ -509,7 +681,28 @@ MIT License - see [LICENSE](LICENSE) file for details.
 - Issues: [GitHub Issues](https://github.com/celo-ai/sdk/issues)
 - Discord: [Celo AI Community](https://discord.gg/celo-ai)
 
+## CI/CD
+
+The SDK includes GitHub Actions workflows for automated testing and deployment:
+
+- **Automated Testing**: Runs on push and pull requests
+- **Security Audits**: Checks for vulnerabilities before publishing
+- **Multi-Node Testing**: Tests on Node.js 18.x and 20.x
+- **Code Coverage**: Uploads coverage reports to Codecov
+- **Automated Publishing**: Publishes to NPM on version tags
+
 ## Changelog
+
+### v1.1.0
+- ✨ **Data Masking**: Automatic sanitization of sensitive data in logs and errors
+- 🔐 **Encryption Utilities**: Secure encryption, hashing, and token management
+- 🌳 **Modular Exports**: Tree-shakeable exports for optimal bundle size
+- 🔄 **CI/CD Integration**: GitHub Actions workflows for automated testing and deployment
+- 🛡️ **GDPR Compliance**: Built-in utilities for data privacy compliance
+- 📦 **Webpack/Babel**: Optimized bundle builds with Webpack and Babel
+- 🔍 **Security Audits**: Automated security vulnerability scanning
+- ⚙️ **Environment Config**: Environment-based masking and security configuration
+- 📝 **Winston/Pino Support**: Optional integration with advanced logging libraries
 
 ### v1.0.0
 - Initial release

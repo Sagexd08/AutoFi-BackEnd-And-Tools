@@ -9,7 +9,7 @@ export class MonitoringSystem extends EventEmitter {
       enableMetrics: config.enableMetrics !== false,
       enableAlerts: config.enableAlerts !== false,
       enableLogging: config.enableLogging !== false,
-      metricsInterval: config.metricsInterval || 30000, // 30 seconds
+      metricsInterval: config.metricsInterval || 30000,
       alertThresholds: {
         cpuUsage: config.cpuThreshold || 80,
         memoryUsage: config.memoryThreshold || 80,
@@ -53,13 +53,11 @@ export class MonitoringSystem extends EventEmitter {
       this.collectMetrics();
     }, this.config.metricsInterval);
     
-    // Collect initial metrics
     this.collectMetrics();
   }
 
   collectMetrics() {
     try {
-      // System metrics
       this.metrics.system = {
         uptime: process.uptime(),
         memory: process.memoryUsage(),
@@ -71,7 +69,6 @@ export class MonitoringSystem extends EventEmitter {
         timestamp: new Date().toISOString()
       };
       
-      // Application metrics
       this.metrics.application = {
         requests: this.getRequestMetrics(),
         errors: this.getErrorMetrics(),
@@ -79,7 +76,6 @@ export class MonitoringSystem extends EventEmitter {
         timestamp: new Date().toISOString()
       };
       
-      // Performance metrics
       this.metrics.performance = {
         responseTime: this.getAverageResponseTime(),
         throughput: this.getThroughput(),
@@ -89,7 +85,6 @@ export class MonitoringSystem extends EventEmitter {
       
       this.emit('metricsCollected', this.metrics);
       
-      // Check for alerts
       if (this.config.enableAlerts) {
         this.checkAlerts();
       }
@@ -120,7 +115,6 @@ export class MonitoringSystem extends EventEmitter {
   }
 
   getRequestMetrics() {
-    // This would track actual requests in a real implementation
     return {
       total: this.requestCount || 0,
       successful: this.successCount || 0,
@@ -138,7 +132,6 @@ export class MonitoringSystem extends EventEmitter {
   }
 
   getActiveConnections() {
-    // This would track actual connections
     return this.activeConnections || 0;
   }
 
@@ -155,7 +148,6 @@ export class MonitoringSystem extends EventEmitter {
   }
 
   setupLogging() {
-    // Override console methods to capture logs
     const originalLog = console.log;
     const originalError = console.error;
     const originalWarn = console.warn;
@@ -186,7 +178,6 @@ export class MonitoringSystem extends EventEmitter {
     
     this.logs.push(log);
     
-    // Keep only last 1000 logs
     if (this.logs.length > 1000) {
       this.logs = this.logs.slice(-1000);
     }
