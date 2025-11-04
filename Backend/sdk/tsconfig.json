@@ -5,7 +5,7 @@
     "lib": ["ES2022"],
     "outDir": "./dist",
     "rootDir": "./src",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -22,11 +22,10 @@
     "exactOptionalPropertyTypes": false,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": false,
-    "noUncheckedIndexedAccess": false,
+    "noUncheckedIndexedAccess": true,
     "allowUnusedLabels": false,
     "allowUnreachableCode": false,
     "resolveJsonModule": true,
-    "moduleResolution": "node",
     "baseUrl": "./src",
     "paths": {
       "@/*": ["./*"],
@@ -34,7 +33,10 @@
       "@/utils/*": ["./utils/*"],
       "@/chains/*": ["./chains/*"],
       "@/agents/*": ["./agents/*"]
-    }
+    },
+    "incremental": true,
+    "composite": true,
+    "types": []
   },
   "include": [
     "src/**/*"

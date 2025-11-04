@@ -93,6 +93,98 @@ Or use the main export:
 import AutoFiSDK from '@celo-ai/sdk/autofi';
 ```
 
+## Advanced Features
+
+### Error Handling
+
+The SDK provides comprehensive error handling with custom error classes:
+
+```typescript
+import { SDKError, ChainError, ValidationError } from '@celo-ai/sdk';
+
+try {
+  await sdk.sendTransaction(request);
+} catch (error) {
+  if (error instanceof ChainError) {
+    console.error('Chain error:', error.chainId, error.message);
+    if (error.recoverable) {
+      // Retry logic
+    }
+  } else if (error instanceof ValidationError) {
+    console.error('Validation error:', error.field, error.reason);
+  }
+}
+```
+
+### Retry Mechanism
+
+Automatic retry with exponential backoff:
+
+```typescript
+import { retryWithBackoff, CircuitBreaker } from '@celo-ai/sdk';
+
+const circuitBreaker = new CircuitBreaker({
+  failureThreshold: 5,
+  recoveryTimeout: 60000,
+});
+
+await retryWithBackoff(
+  async () => {
+    return await sdk.sendTransaction(request);
+  },
+  {
+    maxAttempts: 3,
+    initialDelay: 1000,
+    backoffMultiplier: 2,
+  },
+  circuitBreaker
+);
+```
+
+### Caching
+
+Built-in caching support:
+
+```typescript
+import { MemoryCache, LRUCache } from '@celo-ai/sdk';
+
+const cache = new MemoryCache(60000); // 60 second TTL
+await cache.set('key', data);
+const cached = await cache.get('key');
+```
+
+### Middleware System
+
+Extensible middleware for request/response handling:
+
+```typescript
+import { MiddlewareChain, createLoggingMiddleware } from '@celo-ai/sdk';
+
+const middlewareChain = new MiddlewareChain();
+middlewareChain.add(createLoggingMiddleware(sdkConfig));
+// Add custom middleware
+```
+
+### Plugin System
+
+Extend SDK functionality with plugins:
+
+```typescript
+import { DefaultPluginRegistry } from '@celo-ai/sdk';
+
+const registry = new DefaultPluginRegistry();
+registry.register({
+  metadata: {
+    name: 'my-plugin',
+    version: '1.0.0',
+    dependencies: { requires: ['core-plugin'] },
+  },
+  onInit: async (config) => {
+    // Initialize plugin
+  },
+});
+```
+
 ## Multi-Chain Support
 
 The SDK supports multiple blockchain networks with intelligent routing:
@@ -221,6 +313,64 @@ await sdk.startProxyServer();
 // - Provides failover mechanisms
 // - Monitors performance metrics
 ```
+
+## CLI Tool
+
+The SDK includes a comprehensive CLI tool for command-line operations.
+
+### Installation
+
+```bash
+npm install -g @celo-ai/sdk
+```
+
+### Available Commands
+
+```bash
+# Configuration
+celo-ai init                    # Initialize SDK config
+
+# Chain Management
+celo-ai chain list              # List supported chains
+celo-ai chain health [chainId]  # Check chain health
+
+# Agent Management
+celo-ai agent create            # Create new agent
+celo-ai agent list              # List all agents
+celo-ai agent query <id> <q>    # Query an agent
+
+# Transactions
+celo-ai tx send                 # Send transaction
+
+# Contracts
+celo-ai contract deploy         # Deploy contract
+
+# Health
+celo-ai health                  # Check SDK health
+```
+
+### CLI Examples
+
+```bash
+# Initialize SDK
+celo-ai init --api-key YOUR_KEY --network ethereum
+
+# Create and query an agent
+celo-ai agent create \
+  --type defi \
+  --name "DeFi Optimizer" \
+  --capabilities "find_yield,execute_swaps"
+
+celo-ai agent query agent_123 "Find best yield opportunities"
+
+# Deploy a contract
+celo-ai contract deploy \
+  --name MyContract \
+  --source ./contracts/MyContract.sol \
+  --chain ethereum
+```
+
+See [CLI.md](./CLI.md) for detailed CLI documentation.
 
 ## Configuration
 

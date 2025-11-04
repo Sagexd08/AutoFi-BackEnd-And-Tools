@@ -1359,7 +1359,16 @@ Guidelines:
       try {
         const { createApiRoutes } = await import('../routes/api-routes.js');
         const routes = createApiRoutes(this);
+        // Apply rate limiting globally, then specific routes
         this.app.use('/api', routes);
+        
+        // Health routes don't need rate limiting
+        try {
+          const healthRouter = await import('../routes/health.js');
+          this.app.use('/health', healthRouter.default);
+        } catch {
+          // Health routes optional
+        }
         console.log('✅ Enhanced API routes added');
       } catch (error) {
         console.error('❌ Failed to add enhanced API routes:', error);
@@ -1373,18 +1382,56 @@ Guidelines:
       origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost'],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Session-ID', 'X-Request-ID']
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Session-ID', 'X-Request-ID', 'X-Correlation-ID', 'X-API-Key']
     }));
 
+    // Global rate limiting (per-route rate limiting is handled in routes)
     const limiter = rateLimit({
-      windowMs: 15 * 60 * 1000,
-      max: 100,
-      message: 'Too many requests from this IP, please try again later.'
+      windowMs: 15 * 60 * 1000, // 15 minutes
+      max: 200, // Global limit: 200 requests per 15 minutes per IP
+      message: {
+        success: false,
+        error: {
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: 'Too many requests from this IP, please try again later.',
+          timestamp: new Date().toISOString(),
+        },
+      },
+      standardHeaders: true,
+      legacyHeaders: false,
     });
     this.app.use(limiter);
 
+    // Request logging middleware (if available)
+    import('../utils/logger.js').then(({ logger, requestLogger }) => {
+      this.app.use(requestLogger(logger));
+    }).catch(() => {
+      // Fallback to simple logging
+      this.app.use((req, res, next) => {
+        console.log(`${new Date().toISOString()} - ${req.method} ${req.url} - ${req.ip}`);
+        next();
+      });
+    });
+
     this.app.use(express.json({ limit: '10mb' }));
     this.app.use(express.urlencoded({ extended: true }));
+    
+    // Error handling middleware (if available)
+    import('../middleware/error-handler.js').then(({ errorHandler }) => {
+      this.app.use(errorHandler);
+    }).catch(() => {
+      // Fallback error handler
+      this.app.use((err, req, res, next) => {
+        res.status(err.status || 500).json({
+          success: false,
+          error: {
+            message: err.message || 'Internal Server Error',
+            code: err.code || 'INTERNAL_ERROR',
+            timestamp: new Date().toISOString(),
+          },
+        });
+      });
+    });
   }
 
   setupRoutes() {

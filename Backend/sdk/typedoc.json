@@ -1,0 +1,33 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs",
+  "theme": "default",
+  "includeVersion": true,
+  "readme": "README.md",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeExternals": true,
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Core",
+    "Chains",
+    "Agents",
+    "Contracts",
+    "Testing",
+    "Proxy",
+    "Errors",
+    "Middleware",
+    "Cache",
+    "Observability",
+    "Plugins",
+    "Utils",
+    "Types",
+    "Schemas"
+  ],
+  "name": "Celo AI SDK",
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/__tests__/**"
+  ]
+}
