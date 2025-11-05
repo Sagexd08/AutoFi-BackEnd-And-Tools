@@ -76,9 +76,11 @@ export class TransactionTracker {
         // Stop polling if transaction is confirmed or failed
         if (updated.status === 'success' || updated.status === 'failed') {
           this.stopPollingTransaction(txHash);
+          return; // Exit early - no need to increment retries for terminal states
         }
 
         // Get the currently stored transaction (which may have been updated above)
+        // Only increment retries and check timeout if polling is still active
         const currentTx = this.transactions.get(txHash);
         if (currentTx) {
           currentTx.retries++;
