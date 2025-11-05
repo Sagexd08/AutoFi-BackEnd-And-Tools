@@ -258,15 +258,18 @@ export class EtherscanService {
    */
   async getAccountAnalytics(address) {
     try {
+      // Validate and normalize address once at the start
+      const normalizedAddress = this.validateAndNormalizeAddress(address);
+
       const [balance, transactions, internalTxs, tokenTransfers] = await Promise.all([
-        this.getBalance(address),
-        this.getTransactions(address),
-        this.getInternalTransactions(address),
-        this.getTokenTransfers(address)
+        this.getBalance(normalizedAddress),
+        this.getTransactions(normalizedAddress),
+        this.getInternalTransactions(normalizedAddress),
+        this.getTokenTransfers(normalizedAddress)
       ]);
 
       return {
-        address,
+        address: normalizedAddress,
         balance,
         transactionCount: transactions.length,
         internalTransactionCount: internalTxs.length,
@@ -276,6 +279,11 @@ export class EtherscanService {
         recentTokenTransfers: tokenTransfers.slice(0, 10)
       };
     } catch (error) {
+      // Handle validation errors specifically
+      if (error.message.includes('Invalid address format') || error.message.includes('must be a non-empty string')) {
+        console.warn(`Etherscan analytics validation error: ${error.message}`);
+        return null;
+      }
       console.error('Etherscan analytics error:', error);
       return null;
     }
