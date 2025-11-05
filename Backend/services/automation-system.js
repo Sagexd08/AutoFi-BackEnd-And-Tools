@@ -129,6 +129,10 @@ export class CombinedAutomationSystem extends EventEmitter {
   }
 
   initializeAI() {
+    if (!this.config.geminiApiKey) {
+      throw new Error('GEMINI_API_KEY is required but not set in environment variables or config');
+    }
+    
     this.gemini = new GoogleGenerativeAI(this.config.geminiApiKey);
     this.model = this.gemini.getGenerativeModel({
       model: "gemini-2.0-flash-exp",
@@ -139,7 +143,7 @@ export class CombinedAutomationSystem extends EventEmitter {
         maxOutputTokens: 2048,
       }
     });
-    console.log('Gemini AI initialized');
+    console.log('✅ Gemini AI initialized');
   }
 
   initializeDatabase() {

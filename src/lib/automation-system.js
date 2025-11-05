@@ -120,6 +120,10 @@ export class AutomationSystem {
 
   async initializeLangChainAgent() {
     try {
+      if (!this.config.geminiApiKey) {
+        throw new Error('GEMINI_API_KEY is required but not set in environment variables or config');
+      }
+      
       this.langChainAgent = await LangChainAgent.create({
         geminiApiKey: this.config.geminiApiKey,
         privateKey: this.config.privateKey,
