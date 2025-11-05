@@ -97,8 +97,10 @@ export class EtherscanService {
    */
   async getTransactions(address, startBlock = 0, endBlock = 99999999, sort = 'desc') {
     try {
+      const normalizedAddress = this.validateAndNormalizeAddress(address);
+
       const response = await this.fetchWithTimeout(
-        `${this.baseUrl}?module=account&action=txlist&address=${address}&startblock=${startBlock}&endblock=${endBlock}&sort=${sort}&apikey=${this.apiKey}`
+        `${this.baseUrl}?module=account&action=txlist&address=${normalizedAddress}&startblock=${startBlock}&endblock=${endBlock}&sort=${sort}&apikey=${this.apiKey}`
       );
       const result = await response.json();
       if (result.status === '1') {
@@ -106,6 +108,10 @@ export class EtherscanService {
       }
       return [];
     } catch (error) {
+      if (error.message.includes('Invalid address format') || error.message.includes('must be a non-empty string')) {
+        console.warn(`Etherscan transactions validation error: ${error.message}`);
+        return [];
+      }
       console.error('Etherscan transactions error:', error);
       return [];
     }
@@ -116,8 +122,10 @@ export class EtherscanService {
    */
   async getInternalTransactions(address) {
     try {
+      const normalizedAddress = this.validateAndNormalizeAddress(address);
+
       const response = await this.fetchWithTimeout(
-        `${this.baseUrl}?module=account&action=txlistinternal&address=${address}&apikey=${this.apiKey}`
+        `${this.baseUrl}?module=account&action=txlistinternal&address=${normalizedAddress}&apikey=${this.apiKey}`
       );
       const result = await response.json();
       if (result.status === '1') {
@@ -125,6 +133,10 @@ export class EtherscanService {
       }
       return [];
     } catch (error) {
+      if (error.message.includes('Invalid address format') || error.message.includes('must be a non-empty string')) {
+        console.warn(`Etherscan internal transactions validation error: ${error.message}`);
+        return [];
+      }
       console.error('Etherscan internal transactions error:', error);
       return [];
     }
@@ -135,9 +147,13 @@ export class EtherscanService {
    */
   async getTokenTransfers(address, contractAddress = null) {
     try {
-      let url = `${this.baseUrl}?module=account&action=tokentx&address=${address}`;
+      const normalizedAddress = this.validateAndNormalizeAddress(address);
+
+      let url = `${this.baseUrl}?module=account&action=tokentx&address=${normalizedAddress}`;
       if (contractAddress) {
-        url += `&contractaddress=${contractAddress}`;
+        // Validate contract address if provided
+        const normalizedContract = this.validateAndNormalizeAddress(contractAddress);
+        url += `&contractaddress=${normalizedContract}`;
       }
       url += `&apikey=${this.apiKey}`;
 
@@ -148,6 +164,10 @@ export class EtherscanService {
       }
       return [];
     } catch (error) {
+      if (error.message.includes('Invalid address format') || error.message.includes('must be a non-empty string')) {
+        console.warn(`Etherscan token transfers validation error: ${error.message}`);
+        return [];
+      }
       console.error('Etherscan token transfers error:', error);
       return [];
     }
@@ -182,8 +202,10 @@ export class EtherscanService {
    */
   async getContractABI(contractAddress) {
     try {
+      const normalizedAddress = this.validateAndNormalizeAddress(contractAddress);
+
       const response = await this.fetchWithTimeout(
-        `${this.baseUrl}?module=contract&action=getabi&address=${contractAddress}&apikey=${this.apiKey}`
+        `${this.baseUrl}?module=contract&action=getabi&address=${normalizedAddress}&apikey=${this.apiKey}`
       );
       const result = await response.json();
       if (result.status === '1') {
@@ -191,6 +213,10 @@ export class EtherscanService {
       }
       throw new Error(result.message || 'Failed to get ABI');
     } catch (error) {
+      if (error.message.includes('Invalid address format') || error.message.includes('must be a non-empty string')) {
+        console.warn(`Etherscan ABI validation error: ${error.message}`);
+        return null;
+      }
       console.error('Etherscan ABI error:', error);
       return null;
     }
@@ -201,8 +227,10 @@ export class EtherscanService {
    */
   async getContractSourceCode(contractAddress) {
     try {
+      const normalizedAddress = this.validateAndNormalizeAddress(contractAddress);
+
       const response = await this.fetchWithTimeout(
-        `${this.baseUrl}?module=contract&action=getsourcecode&address=${contractAddress}&apikey=${this.apiKey}`
+        `${this.baseUrl}?module=contract&action=getsourcecode&address=${normalizedAddress}&apikey=${this.apiKey}`
       );
       const result = await response.json();
       if (result.status === '1' && result.result.length > 0) {
@@ -210,6 +238,10 @@ export class EtherscanService {
       }
       return null;
     } catch (error) {
+      if (error.message.includes('Invalid address format') || error.message.includes('must be a non-empty string')) {
+        console.warn(`Etherscan source code validation error: ${error.message}`);
+        return null;
+      }
       console.error('Etherscan source code error:', error);
       return null;
     }
