@@ -301,9 +301,9 @@ export class DataMasker {
 
       if (key !== 'message' && key !== 'name' && key !== 'stack') {
 
-        const value = (error as Record<string, unknown>)[key];
+        const value = (error as unknown as Record<string, unknown>)[key];
 
-        (sanitized as Record<string, unknown>)[key] = typeof value === 'string' 
+        (sanitized as unknown as Record<string, unknown>)[key] = typeof value === 'string' 
 
           ? this.sanitizeString(value) 
 

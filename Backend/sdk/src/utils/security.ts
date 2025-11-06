@@ -96,7 +96,7 @@ export class EncryptionUtil {
 
       const iv = crypto.randomBytes(this.config.ivLength);
 
-      const cipher = crypto.createCipheriv(this.config.algorithm, key, iv);
+      const cipher = crypto.createCipheriv(this.config.algorithm, key, iv) as crypto.CipherGCM;
 
       let encrypted = cipher.update(data, 'utf8', 'hex');
 
@@ -158,7 +158,7 @@ export class EncryptionUtil {
 
       const key = this.deriveKey(password, salt);
 
-      const decipher = crypto.createDecipheriv(this.config.algorithm, key, iv);
+      const decipher = crypto.createDecipheriv(this.config.algorithm, key, iv) as crypto.DecipherGCM;
 
       decipher.setAuthTag(authTag);
 

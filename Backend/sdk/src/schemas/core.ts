@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { TransactionRequest, TransactionResponse, AgentResponse, TestResult } from '../types/core';
+import type { TransactionRequest, TransactionResponse, TransactionReceipt, AgentResponse, TestResult } from '../types/core';
 
 export const AddressSchema = z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid address format');
 
@@ -147,13 +147,59 @@ export const TransactionRequestSchema: z.ZodType<TransactionRequest> = z.object(
 
 });
 
+const TransactionReceiptSchema: z.ZodType<TransactionReceipt> = z.object({
+
+  transactionHash: TransactionHashSchema,
+
+  blockNumber: z.string(),
+
+  blockHash: TransactionHashSchema,
+
+  transactionIndex: z.number().int().nonnegative(),
+
+  from: AddressSchema,
+
+  to: AddressSchema,
+
+  gasUsed: NumberStringSchema,
+
+  effectiveGasPrice: NumberStringSchema,
+
+  status: z.enum(['success', 'failed']),
+
+  logs: z.array(z.object({
+
+    address: AddressSchema,
+
+    topics: z.array(z.string()),
+
+    data: HexStringSchema,
+
+    blockNumber: z.string(),
+
+    transactionHash: TransactionHashSchema,
+
+    transactionIndex: z.number().int().nonnegative(),
+
+    logIndex: z.number().int().nonnegative(),
+
+    removed: z.boolean(),
+
+  })),
+
+  logsBloom: z.string(),
+
+  contractAddress: AddressSchema.optional(),
+
+}).strict();
+
 export const TransactionResponseSchema: z.ZodType<TransactionResponse> = z.object({
 
   success: z.boolean(),
 
   txHash: TransactionHashSchema.optional(),
 
-  receipt: z.unknown().optional(),
+  receipt: TransactionReceiptSchema.optional(),
 
   error: z.string().optional(),
 
@@ -185,7 +231,7 @@ export const AgentResponseSchema: z.ZodType<AgentResponse> = z.object({
 
     name: z.string(),
 
-    parameters: z.record(z.unknown()),
+    parameters: z.record(z.string(), z.unknown()),
 
     result: z.unknown().optional(),
 
@@ -237,7 +283,7 @@ export const TestResultSchema: z.ZodType<TestResult> = z.object({
 
     url: z.string(),
 
-    headers: z.record(z.string()),
+    headers: z.record(z.string(), z.string()),
 
     body: z.unknown().optional(),
 
@@ -247,7 +293,7 @@ export const TestResultSchema: z.ZodType<TestResult> = z.object({
 
     status: z.number().int(),
 
-    headers: z.record(z.string()),
+    headers: z.record(z.string(), z.string()),
 
     body: z.unknown(),
 
