@@ -31,18 +31,14 @@ Workflow format:
 {
   "name": "workflow name",
   "description": "what this workflow does",
-  "trigger": {
-    "type": "event" | "cron" | "manual" | "condition",
-    // event-specific fields
-    // cron-specific fields
-    // condition-specific fields
-  },
-  "actions": [
-    {
-      "type": "transfer" | "contract_call" | "notify" | "conditional",
-      // action-specific fields
-    }
-  ]
+    "trigger": {
+      "type": "event" | "cron" | "manual" | "condition",
+    },
+    "actions": [
+      {
+        "type": "transfer" | "contract_call" | "notify" | "conditional",
+      }
+    ]
 }`;
 
 export class WorkflowOrchestrator {
@@ -52,9 +48,6 @@ export class WorkflowOrchestrator {
     this.agent = agent;
   }
 
-  /**
-   * Interpret natural language and generate a workflow
-   */
   async interpretWorkflow(
     naturalLanguage: string,
     context?: Record<string, any>
@@ -87,7 +80,6 @@ export class WorkflowOrchestrator {
       memory.addMessage('user', naturalLanguage);
       memory.addMessage('assistant', response.content as string);
 
-      // Parse workflow from response
       const workflow = this.extractWorkflowFromResponse(response.content as string);
 
       return {
@@ -103,9 +95,6 @@ export class WorkflowOrchestrator {
     }
   }
 
-  /**
-   * Execute a workflow using the agent's tools
-   */
   async executeWorkflow(
     workflow: Workflow
   ): Promise<{
@@ -121,7 +110,6 @@ export class WorkflowOrchestrator {
       for (const action of workflow.actions) {
         const result = await this.executeAction(action);
         
-        // Store results in arrays per action type to preserve all results
         if (!results[action.type]) {
           results[action.type] = [];
         }
@@ -156,9 +144,6 @@ export class WorkflowOrchestrator {
     }
   }
 
-  /**
-   * Explain a workflow in natural language
-   */
   async explainWorkflow(workflow: Workflow): Promise<string> {
     const prompt = ChatPromptTemplate.fromMessages([
       SystemMessagePromptTemplate.fromTemplate(
@@ -178,17 +163,14 @@ export class WorkflowOrchestrator {
   }
 
   private extractWorkflowFromResponse(response: string): Workflow | undefined {
-    // Try to extract JSON from markdown code blocks
     const jsonMatch = response.match(/```json\n([\s\S]*?)\n```/) || response.match(/```\n([\s\S]*?)\n```/);
     if (jsonMatch) {
       try {
         return JSON.parse(jsonMatch[1]) as Workflow;
       } catch {
-        // Fall through to try parsing the whole response
       }
     }
 
-    // Try to parse the whole response as JSON
     try {
       return JSON.parse(response) as Workflow;
     } catch {
@@ -206,7 +188,6 @@ export class WorkflowOrchestrator {
 
     switch (action.type) {
       case 'transfer': {
-        // Validate required fields
         if (!action.to) {
           return { success: false, error: 'Missing required transfer parameter: to' };
         }
@@ -250,7 +231,6 @@ export class WorkflowOrchestrator {
       }
 
       case 'contract_call': {
-        // Validate required fields
         if (!action.contractAddress) {
           return { success: false, error: 'Missing required contract_call parameter: contractAddress' };
         }
@@ -278,7 +258,6 @@ export class WorkflowOrchestrator {
       }
 
       case 'notify': {
-        // Webhook notification - implement as needed
         return { success: true, result: { notified: true } };
       }
 

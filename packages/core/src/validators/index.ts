@@ -12,7 +12,6 @@ export const AmountSchema = z.string().regex(/^\d+$/, {
 
 export function validateWorkflow(workflow: unknown): workflow is Workflow {
   try {
-    // Basic validation - can be enhanced with full schema validation
     const w = workflow as Workflow;
     return (
       typeof w === 'object' &&

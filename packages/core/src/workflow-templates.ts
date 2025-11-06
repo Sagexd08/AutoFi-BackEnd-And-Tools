@@ -15,10 +15,10 @@ export const workflowTemplates: WorkflowTemplate[] = [
       trigger: {
         type: 'event',
         event: {
-          contractAddress: '0x...', // DAO contract address
+          contractAddress: '0x...',
           eventName: 'Transfer',
           filter: {
-            to: '0x...', // DAO address
+            to: '0x...',
           },
         },
       },
@@ -28,14 +28,14 @@ export const workflowTemplates: WorkflowTemplate[] = [
           condition: {
             type: 'custom',
             operator: 'gte',
-            value: '100000000000000000000', // 100 cUSD in wei
+            value: '100000000000000000000',
           },
           actions: [
             {
               type: 'transfer',
-              to: '0x...', // Treasury address
-              amount: '10000000000000000000', // 10% of 100 cUSD
-              tokenAddress: '0x765DE816845861e75A25fCA122bb6898B8B1282a', // cUSD on mainnet
+              to: '0x...',
+              amount: '10000000000000000000',
+              tokenAddress: '0x765DE816845861e75A25fCA122bb6898B8B1282a',
             },
           ],
         },
@@ -59,8 +59,8 @@ export const workflowTemplates: WorkflowTemplate[] = [
       actions: [
         {
           type: 'transfer',
-          to: '0x...', // Recipient address
-          amount: '10000000000000000000', // 10 CELO in wei
+          to: '0x...',
+          amount: '10000000000000000000',
         },
       ],
       enabled: true,
@@ -80,7 +80,7 @@ export const workflowTemplates: WorkflowTemplate[] = [
         condition: {
           type: 'balance',
           operator: 'gt',
-          value: '1000000000000000000000', // 1000 CELO in wei
+          value: '1000000000000000000000',
         },
       },
       actions: [
@@ -99,10 +99,8 @@ export function saveWorkflowTemplate(template: WorkflowTemplate, outputDir: stri
   const filename = join(outputDir, `${template.id}.json`);
   
   try {
-    // Ensure the output directory exists
     mkdirSync(dirname(filename), { recursive: true });
     
-    // Write the file
     writeFileSync(filename, JSON.stringify(template.workflow, null, 2));
     console.log(`Saved template to ${filename}`);
   } catch (error) {

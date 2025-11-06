@@ -6,9 +6,6 @@ import type {
   ContractCall,
 } from '@celo-automator/types';
 
-/**
- * ERC20 standard ABI including common functions
- */
 const ERC20_ABI = [
   {
     constant: true,
@@ -50,9 +47,6 @@ const ERC20_ABI = [
   },
 ] as const;
 
-/**
- * Get native CELO balance for an address
- */
 export async function getBalance(
   client: CeloClient,
   address: Address
@@ -61,9 +55,6 @@ export async function getBalance(
   return balance.toString();
 }
 
-/**
- * Get ERC20 token balance
- */
 export async function getTokenBalance(
   client: CeloClient,
   address: Address,
@@ -104,9 +95,6 @@ export async function getTokenBalance(
   };
 }
 
-/**
- * Send native CELO tokens
- */
 export async function sendCELO(
   client: CeloClient,
   to: Address,
@@ -144,9 +132,6 @@ export async function sendCELO(
   }
 }
 
-/**
- * Send ERC20 tokens
- */
 export async function sendToken(
   client: CeloClient,
   tokenAddress: Address,
@@ -188,9 +173,6 @@ export async function sendToken(
   }
 }
 
-/**
- * Call a contract function
- */
 export async function callContract(
   client: CeloClient,
   call: ContractCall
@@ -231,9 +213,6 @@ export async function callContract(
   }
 }
 
-/**
- * Read contract data (view function)
- */
 export async function readContract(
   client: CeloClient,
   call: Omit<ContractCall, 'value'>
@@ -246,9 +225,6 @@ export async function readContract(
   });
 }
 
-/**
- * Listen to blockchain events
- */
 export async function listenToEvent(
   client: CeloClient,
   filter: {
@@ -270,9 +246,6 @@ export async function listenToEvent(
   });
 }
 
-/**
- * Get transaction receipt
- */
 export async function getTransactionReceipt(
   client: CeloClient,
   txHash: Hash
@@ -280,9 +253,6 @@ export async function getTransactionReceipt(
   return await client.getPublicClient().getTransactionReceipt({ hash: txHash });
 }
 
-/**
- * Get transaction status
- */
 export async function getTransactionStatus(
   client: CeloClient,
   txHash: Hash

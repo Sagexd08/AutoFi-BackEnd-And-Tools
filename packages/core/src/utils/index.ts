@@ -1,15 +1,9 @@
 import { Address } from 'viem';
 
-/**
- * Validate Ethereum/Celo address format
- */
 export function isValidAddress(address: string): boolean {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
 }
 
-/**
- * Validate and normalize address
- */
 export function normalizeAddress(address: string): Address {
   if (!isValidAddress(address)) {
     throw new Error(`Invalid address format: ${address}`);
@@ -17,9 +11,6 @@ export function normalizeAddress(address: string): Address {
   return address.toLowerCase() as Address;
 }
 
-/**
- * Format amount from wei to readable format
- */
 export function formatAmount(amount: bigint | string, decimals: number = 18): string {
   const amountBigInt = typeof amount === 'string' ? BigInt(amount) : amount;
   const divisor = BigInt(10 ** decimals);
@@ -36,25 +27,16 @@ export function formatAmount(amount: bigint | string, decimals: number = 18): st
   return `${whole}.${trimmed}`;
 }
 
-/**
- * Parse amount from readable format to wei
- */
 export function parseAmount(amount: string, decimals: number = 18): bigint {
   const [whole, fraction = ''] = amount.split('.');
   const fractionPadded = fraction.padEnd(decimals, '0').slice(0, decimals);
   return BigInt(whole) * BigInt(10 ** decimals) + BigInt(fractionPadded);
 }
 
-/**
- * Sleep utility
- */
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Retry a function with exponential backoff
- */
 export async function retry<T>(
   fn: () => Promise<T>,
   options: {
@@ -92,18 +74,12 @@ export async function retry<T>(
   throw lastError!;
 }
 
-/**
- * Generate a unique ID
- */
 export function generateId(prefix: string = ''): string {
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(2, 9);
   return prefix ? `${prefix}_${timestamp}_${random}` : `${timestamp}_${random}`;
 }
 
-/**
- * Deep merge objects
- */
 export function deepMerge<T extends Record<string, any>>(
   target: T,
   ...sources: Partial<T>[]

@@ -8,28 +8,24 @@ Workflow Structure:
   "description": "What this workflow does",
   "trigger": {
     "type": "event" | "cron" | "manual" | "condition",
-    // For event triggers:
     "event": {
       "contractAddress": "0x...",
       "eventName": "Transfer",
       "filter": {}
     },
-    // For cron triggers:
-    "cron": "0 */6 * * *", // Every 6 hours
-    // For condition triggers:
+    "cron": "0 */6 * * *",
     "condition": {
       "type": "balance",
       "operator": "gt",
-      "value": "1000000000000000000" // 1 CELO in wei
+      "value": "1000000000000000000"
     }
   },
   "actions": [
     {
       "type": "transfer" | "contract_call" | "notify" | "conditional",
-      "to": "0x...", // For transfers
-      "amount": "1000000000000000000", // Amount in wei
-      "tokenAddress": "0x...", // Optional, omit for CELO
-      // For contract calls:
+      "to": "0x...",
+      "amount": "1000000000000000000",
+      "tokenAddress": "0x...",
       "contractAddress": "0x...",
       "functionName": "transfer",
       "parameters": []

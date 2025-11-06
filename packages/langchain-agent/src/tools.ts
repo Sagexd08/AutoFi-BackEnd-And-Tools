@@ -97,8 +97,6 @@ export function createTools(celoClient?: CeloClient) {
         abi: z.array(z.any()).optional().describe('Contract ABI (if not cached)'),
       }),
       func: async ({ address, functionName, parameters, abi }) => {
-        // In a real implementation, you'd fetch/cache the ABI
-        // For now, we'll require it to be provided
         if (!abi) {
           return JSON.stringify({
             success: false,
