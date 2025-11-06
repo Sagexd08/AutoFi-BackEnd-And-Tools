@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import { getConfig } from './init.js';
-import { writeFileSync, existsSync, readFileSync } from 'fs';
+import { writeFileSync, existsSync, readFileSync, renameSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 
@@ -36,9 +36,28 @@ export async function configCommand(options: any) {
     }
 
     // Read existing config or create new one
-    const existingConfig = existsSync(CONFIG_FILE)
-      ? JSON.parse(readFileSync(CONFIG_FILE, 'utf-8'))
-      : {};
+    let existingConfig: Record<string, any> = {};
+    if (existsSync(CONFIG_FILE)) {
+      try {
+        const configContent = readFileSync(CONFIG_FILE, 'utf-8');
+        existingConfig = JSON.parse(configContent);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error(chalk.red(`❌ Configuration file is corrupted: ${errorMessage}`));
+        console.error(chalk.yellow(`   Falling back to empty configuration.`));
+        
+        // Backup the corrupted file
+        try {
+          const backupPath = `${CONFIG_FILE}.corrupted.${Date.now()}`;
+          renameSync(CONFIG_FILE, backupPath);
+          console.error(chalk.yellow(`   Corrupted config backed up to: ${backupPath}`));
+        } catch (backupError) {
+          console.error(chalk.yellow(`   Warning: Could not backup corrupted config file`));
+        }
+        
+        // existingConfig is already set to {} as fallback
+      }
+    }
 
     // Update the config
     existingConfig[key] = value;

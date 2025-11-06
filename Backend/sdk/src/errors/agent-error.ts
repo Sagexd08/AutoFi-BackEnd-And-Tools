@@ -32,6 +32,7 @@ export class AgentError extends SDKError {
       recoverable?: boolean;
       cause?: Error;
     } = {}
+  ) {
     super(ERROR_CODES.AGENT_NOT_FOUND, message, {
       context: {
         ...options.context,

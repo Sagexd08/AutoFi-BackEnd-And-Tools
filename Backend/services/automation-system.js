@@ -67,6 +67,7 @@ export class CombinedAutomationSystem extends EventEmitter {
     this.advisorySystem = new Map();
     this.predictiveAnalytics = {};
     this._consolidatedAgentStarted = false;
+    this.expressInitialized = false;
 
     this.multiChainConfig = null;
     this.proxyServer = null;
@@ -94,6 +95,7 @@ export class CombinedAutomationSystem extends EventEmitter {
     });
     this.initializeExpress().catch((error) => {
       logger.error('Failed to initialize Express', { error: error.message });
+      this.expressInitialized = false;
     });
   }
 
@@ -1209,6 +1211,7 @@ Guidelines:
     this.setupOrchestrationEndpoints();
     this.setupAnalyticsEndpoints();
     await this.setupErrorHandlers();
+    this.expressInitialized = true;
   }
 
   async initializeEnhancedFeatures() {
@@ -1959,6 +1962,9 @@ Guidelines:
   }
 
   start() {
+    if (!this.expressInitialized || !this.app) {
+      throw new Error('Express application not initialized. Cannot start server. Ensure initializeExpress() completed successfully.');
+    }
     const server = http.createServer(this.app);
     const wss = new WebSocketServer({ server });
 

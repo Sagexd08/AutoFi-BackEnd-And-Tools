@@ -69,13 +69,31 @@ export class CodeGenerator extends EventEmitter {
       throw error;
     }
   }
+  _isStubSource(source) {
+    if (!source || typeof source !== 'string') {
+      return false;
+    }
+    // Check if source is only comments (stub pattern)
+    const nonCommentLines = source
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0 && !line.startsWith('//') && !line.startsWith('/*') && !line.startsWith('*'));
+    return nonCommentLines.length === 0;
+  }
   async compileCode(parameters) {
     if (!parameters || typeof parameters !== 'object') {
       throw new Error('Invalid parameters provided');
     }
-    const { source, name } = parameters;
+    const { source, name, language } = parameters;
     if (!source || typeof source !== 'string') {
       throw new Error('Valid source code string is required');
+    }
+    // Validate language support - check for stub sources or explicit language parameter
+    if (language && language !== 'solidity') {
+      throw new Error(`Language ${language} not supported`);
+    }
+    if (this._isStubSource(source)) {
+      throw new Error('Cannot compile stub source code. Only Solidity is supported.');
     }
     if (!this.contractFactory) {
       throw new Error('ContractFactory not available');
@@ -124,9 +142,16 @@ export class CodeGenerator extends EventEmitter {
     if (!parameters || typeof parameters !== 'object') {
       throw new Error('Invalid parameters provided');
     }
-    const { source, name, chainId, constructorArgs } = parameters;
+    const { source, name, chainId, constructorArgs, language } = parameters;
     if (!source || typeof source !== 'string') {
       throw new Error('Valid source code string is required for deployment');
+    }
+    // Validate language support - check for stub sources or explicit language parameter
+    if (language && language !== 'solidity') {
+      throw new Error(`Language ${language} not supported`);
+    }
+    if (this._isStubSource(source)) {
+      throw new Error('Cannot deploy stub source code. Only Solidity is supported.');
     }
     if (!this.contractFactory) {
       throw new Error('ContractFactory not available');
@@ -142,6 +167,7 @@ export class CodeGenerator extends EventEmitter {
         contractConfig,
         chainId || this.config.defaultChain
       );
+      this.stats.totalDeployments++;
       const result = {
         success: deployment.success,
         contractAddress: deployment.contractAddress,
@@ -150,15 +176,16 @@ export class CodeGenerator extends EventEmitter {
         abi: deployment.abi,
         timestamp: new Date().toISOString()
       };
-      if (deployment.success) {
+      if (deployment.success === false) {
+        this.stats.failedDeployments++;
+      } else {
         this.stats.successfulDeployments++;
-        this.stats.totalDeployments++;
       }
       this.emit('deploymentCompleted', result);
       return result;
     } catch (error) {
-      this.stats.failedDeployments++;
       this.stats.totalDeployments++;
+      this.stats.failedDeployments++;
       this.emit('deploymentError', { name, error: error.message });
       throw error;
     }
@@ -175,7 +202,8 @@ export class CodeGenerator extends EventEmitter {
       if (this.config.enableCompilation && generation.source) {
         compilation = await this.compileCode({
           source: generation.source,
-          name: generation.name
+          name: generation.name,
+          language: generation.language
         });
       }
       let deployment = null;
@@ -184,7 +212,8 @@ export class CodeGenerator extends EventEmitter {
           source: generation.source,
           name: generation.name,
           chainId: parameters.chainId,
-          constructorArgs: parameters.constructorArgs
+          constructorArgs: parameters.constructorArgs,
+          language: generation.language
         });
       }
       return {
@@ -202,12 +231,8 @@ export class CodeGenerator extends EventEmitter {
     if (language === 'solidity') {
       return this.generateSolidityTemplate(description, name, options);
     }
-    // Fallback stub for non-Solidity languages
-    return `// Contract: ${name}
-// Language: ${language}
-// Description: ${description}
-// This is a stub template. Full implementation for ${language} is not yet available.
-`;
+    // Explicit error for unsupported languages
+    throw new Error(`Language ${language} not supported`);
   }
   sanitizeContractName(name) {
     if (!name || typeof name !== 'string') {

@@ -203,7 +203,42 @@ export class RebalancerSystem extends EventEmitter {
       };
       
       transactions.forEach((tx) => {
-        const amount = parseFloat(tx.amount) || 0;
+        // Explicit validation of tx.amount
+        const parsedAmount = parseFloat(tx.amount);
+        let amount = null;
+        let amountValidationFailed = false;
+        let validationReason = null;
+        
+        // Validate: must be a finite number and positive (> 0)
+        if (tx.amount === undefined || tx.amount === null) {
+          amountValidationFailed = true;
+          validationReason = `tx.amount is ${tx.amount === undefined ? 'undefined' : 'null'}`;
+        } else if (!Number.isFinite(parsedAmount)) {
+          amountValidationFailed = true;
+          validationReason = `tx.amount "${tx.amount}" cannot be parsed as a finite number`;
+        } else if (parsedAmount <= 0) {
+          amountValidationFailed = true;
+          validationReason = `tx.amount ${parsedAmount} is not positive (must be > 0)`;
+        } else {
+          amount = parsedAmount;
+        }
+        
+        // If validation failed, skip cost calculations and record in missingComponents
+        if (amountValidationFailed) {
+          logger.warn('Transaction amount validation failed - skipping cost calculations', {
+            transaction: `${tx.from} -> ${tx.to}`,
+            rawAmount: tx.amount,
+            reason: validationReason
+          });
+          costBreakdown.missingComponents.push({
+            transaction: `${tx.from} -> ${tx.to}`,
+            missing: ['amount'],
+            reason: validationReason,
+            rawAmount: tx.amount
+          });
+          return; // Skip this transaction's cost calculations
+        }
+        
         let txGasCost = 0;
         let txProtocolFee = 0;
         let txSlippageImpact = 0;
@@ -428,13 +463,13 @@ export class RebalancerSystem extends EventEmitter {
       return amount > 0 && tx.from !== tx.to && tx.estimatedGas > 0;
     });
     
-    // Determine if rebalancing is required but can't be executed
+    // Determine if rebalancing is required
     const rebalancingRequired = adjustments.length > 0;
     const canExecute = validTransactions.length > 0;
     
     return {
       transactions: validTransactions,
-      rebalancingRequired: rebalancingRequired && !canExecute
+      rebalancingRequired: rebalancingRequired
     };
   }
   async executeRebalancingTransactions(walletAddress, transactions) {

@@ -167,7 +167,10 @@ async function executeWorkflow(
 
       // Wait before polling (use retry backoff if we're in retry mode, otherwise use poll interval)
       const waitTime = consecutiveRetries > 0 ? retryBackoffMs : pollIntervalMs;
-      await new Promise((resolve) => setTimeout(resolve, waitTime));
+      // Ensure we never wait past the timeout deadline
+      const remainingMs = timeoutMs - elapsed;
+      const actualWaitTime = Math.min(remainingMs, waitTime);
+      await new Promise((resolve) => setTimeout(resolve, actualWaitTime));
 
       // Fetch status with retry handling
       try {

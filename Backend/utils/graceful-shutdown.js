@@ -70,7 +70,7 @@ export function setupGracefulShutdown({ onShutdown, timeout = 30000, server }) {
       await shutdownPromise;
     } catch (error) {
       // Error handling is done inside the promise, but we catch here to prevent unhandled rejections
-      throw error;
+      logger.error('Error in shutdown promise', { error: error.message, stack: error.stack });
     }
   };
 

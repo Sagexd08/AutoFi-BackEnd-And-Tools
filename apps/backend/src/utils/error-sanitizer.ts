@@ -54,7 +54,7 @@ export function redactSensitiveFields(obj: any, depth = 0): any {
     
     // Check if key matches sensitive patterns
     const isSensitive = SENSITIVE_FIELDS.some(field => lowerKey.includes(field)) ||
-                       SENSITIVE_PATTERNS.some(pattern => pattern.test(key));
+                       SENSITIVE_PATTERNS.some(pattern => pattern.test(lowerKey));
 
     if (isSensitive) {
       redacted[key] = '[REDACTED]';

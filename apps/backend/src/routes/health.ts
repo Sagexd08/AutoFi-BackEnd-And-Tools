@@ -8,13 +8,7 @@ router.get('/', async (_req, res) => {
     success: true,
     status: 'healthy',
     timestamp: new Date().toISOString(),
-router.get('/', async (req, res) => {
-  res.json({
-    success: true,
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
   });
-});  });
 });
 
 export { router as healthRoutes };

@@ -235,7 +235,7 @@ export class EnvironmentManager extends EventEmitter {
   }
   registerSDKMethodsAsTools() {
     if (!this.autofiSDK) {
-      console.warn('⚠️  Cannot register SDK tools: AutoFi SDK not available');
+      logger.warn('Cannot register SDK tools: AutoFi SDK not available', { module: 'environment-manager', function: 'registerSdkTools', sdk: 'AutoFi' });
       return;
     }
     try {
@@ -320,11 +320,18 @@ export class EnvironmentManager extends EventEmitter {
         try {
           this.registerTool(method);
         } catch (error) {
-          console.error(`❌ Failed to register SDK tool ${method.id}:`, error.message);
+          logger.error('Failed to register SDK tool', {
+            sdkToolId: method.id,
+            error: error.message,
+            stack: error.stack
+          });
         }
       });
     } catch (error) {
-      console.error('❌ Failed to register SDK methods as tools:', error);
+      logger.error('Failed to register SDK methods as tools', {
+        error: error.message,
+        stack: error.stack
+      });
     }
   }
   getStats() {

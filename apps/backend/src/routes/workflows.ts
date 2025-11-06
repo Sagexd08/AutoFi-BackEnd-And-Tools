@@ -41,13 +41,6 @@ if (process.env.CELO_PRIVATE_KEY) {
     // Orchestrator will remain undefined, endpoints will return 503
   }
 }
-    if (agent) {
-      orchestrator = new WorkflowOrchestrator(agent);
-    }
-  }
-})().catch((error) => {
-  console.error('Failed to initialize agent:', error);
-});
 
 // Create workflow from natural language
 router.post('/interpret', async (req, res, next) => {

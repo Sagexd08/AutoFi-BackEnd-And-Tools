@@ -7,7 +7,7 @@ export class PostmanProtocol extends EventEmitter {
     super();
     this.config = {
       apiKey: config.apiKey || process.env.POSTMAN_API_KEY,
-      baseUrl: config.baseUrl || 'https:
+      baseUrl: config.baseUrl || 'https://api.getpostman.com',
       workspaceId: config.workspaceId || process.env.POSTMAN_WORKSPACE_ID,
       collectionId: config.collectionId || process.env.POSTMAN_COLLECTION_ID,
       environmentId: config.environmentId || process.env.POSTMAN_ENVIRONMENT_ID,
@@ -406,9 +406,7 @@ export class PostmanProtocol extends EventEmitter {
       const run = response.data.run;
       this.emit('monitorRunCompleted', { monitorId, runId: run.uid });
       return run;
-  replaceVariablesInObject(obj, variable) {
-    if (typeof obj === 'string') {
-      const escapedKey = variable.key.replace(/[.*+?^${}()|[\]\\]/g, '\\    } catch (error) {
+    } catch (error) {
       this.emit('error', { type: 'runMonitor', error: error.message });
       throw new Error(`Failed to run monitor ${monitorId}: ${error.message}`);
     }
@@ -420,17 +418,20 @@ export class PostmanProtocol extends EventEmitter {
       const newObj = Array.isArray(obj) ? [] : {};
       for (const key in obj) {
         newObj[key] = this.replaceVariablesInObject(obj[key], variable);
-');
+      }
+      return newObj;
+    }
+    return obj;
+  }
+  replaceVariablesInObject(obj, variable) {
+    if (typeof obj === 'string') {
+      const escapedKey = variable.key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       return obj.replace(new RegExp(`{{${escapedKey}}}`, 'g'), variable.value);
     } else if (typeof obj === 'object' && obj !== null) {
       const newObj = Array.isArray(obj) ? [] : {};
       for (const key in obj) {
         newObj[key] = this.replaceVariablesInObject(obj[key], variable);
       }
-      return newObj;
-    }
-    return obj;
-  }      }
       return newObj;
     }
     return obj;
@@ -445,7 +446,7 @@ export class PostmanProtocol extends EventEmitter {
           info: {
             name: collection.info.name,
             description: collection.info.description,
-            schema: 'https:
+            schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json'
           },
           item: collection.item
         };

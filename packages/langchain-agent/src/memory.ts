@@ -1,5 +1,4 @@
-import { HumanMessage, AIMessage } from '@langchain/core/messages';
-import type { AgentMemory } from '@celo-automator/types';
+import { HumanMessage, AIMessage, SystemMessage } from '@langchain/core/messages';
 
 export class BufferMemory {
   private chatHistory: Array<{
@@ -49,7 +48,7 @@ export class BufferMemory {
         return new AIMessage(msg.content);
       }
     });
-  }  }
+  }
 
   getRecentActions() {
     return this.recentActions;
@@ -59,8 +58,7 @@ export class BufferMemory {
     this.chatHistory = [];
     this.recentActions = [];
   }
-
-  toMemory(): AgentMemory {
+  toMemory() {
     return {
       chatHistory: this.chatHistory,
       recentActions: this.recentActions,
