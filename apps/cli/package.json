@@ -13,7 +13,8 @@
     "start": "node dist/cli.js",
     "clean": "rimraf dist",
     "type-check": "tsc --noEmit",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "node -e \"console.log('No tests for @celo-automator/cli yet');\""
   },
   "dependencies": {
     "@celo-automator/types": "workspace:*",

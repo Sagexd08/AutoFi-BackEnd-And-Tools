@@ -64,6 +64,13 @@ Celo AI Automator is a comprehensive, production-ready platform for building AI-
 - **REST API**: Full-featured REST API with Swagger documentation
 - **TypeScript First**: Complete TypeScript support with type definitions
 
+## 🏎 Turborepo Workflow
+- `pnpm dev` runs `turbo run dev` with persistent caching disabled for rapid feedback; use `--filter` when you only need a single app.
+- `pnpm build` orchestrates `turbo run build`, honoring package dependency graphs and caching outputs from `dist`, `build`, or `.next` directories.
+- `pnpm test` now succeeds across the workspace: packages with full test suites execute them, while placeholders keep other packages green until tests are added.
+- `pnpm install` triggers a `prepare` hook that executes `turbo run type-check`, catching TypeScript issues as dependencies are installed.
+- Environment-sensitive tasks share configuration through `globalEnv` in `turbo.json`; ensure required keys exist in your `.env` files before running cross-package commands.
+
 ## 🏗️ Architecture
 
 ```
