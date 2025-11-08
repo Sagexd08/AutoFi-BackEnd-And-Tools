@@ -2,7 +2,6 @@ import {
   createPublicClient,
   createWalletClient,
   http,
-  Address,
   PublicClient,
   WalletClient,
 } from 'viem';

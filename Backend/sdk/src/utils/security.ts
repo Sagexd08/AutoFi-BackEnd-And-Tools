@@ -829,9 +829,7 @@ export class TokenManager {
   }
 }
 
-/**
- * Advanced Secure Storage with key rotation support
- */
+
 export class SecureStorage {
   private readonly encryption: EncryptionUtil;
   private readonly storage: Map<string, string> = new Map();
@@ -848,7 +846,6 @@ export class SecureStorage {
     this.keyRotationIntervalMs = config.keyRotationIntervalMs ?? 86400000; // 24 hours
     this.logger = logger;
 
-    // Load from storage backend if available
     if (this.storageBackend) {
       this.loadFromStorage().catch((error) => {
         this.logger?.error('Failed to load from storage', { error });
