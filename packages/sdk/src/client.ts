@@ -5,6 +5,21 @@ import type {
   SDKConfig,
   SDKErrorObject,
 } from './types.js';
+import {
+  withRetry,
+  shouldRetryError,
+  type RetryConfig,
+} from './utils/retry.js';
+import { Cache, generateCacheKey } from './utils/cache.js';
+import { RateLimiter } from './utils/rate-limiter.js';
+import { CircuitBreaker } from './utils/circuit-breaker.js';
+import {
+  InterceptorManager,
+  type RequestInterceptor,
+  type ResponseInterceptor,
+  type ErrorInterceptor,
+} from './utils/interceptors.js';
+import { EventEmitter, type SDKEventMap } from './utils/events.js';
 
 const ErrorResponseSchema = z
   .object({
@@ -43,6 +58,12 @@ export class SDKHttpClient {
   private readonly apiKey?: string;
   private readonly defaultHeaders: Record<string, string>;
   private readonly defaultTimeout?: number;
+  private readonly cache?: Cache<unknown>;
+  private readonly rateLimiter?: RateLimiter;
+  private readonly circuitBreaker?: CircuitBreaker;
+  private readonly retryConfig?: RetryConfig | false;
+  private readonly interceptors: InterceptorManager;
+  private readonly events: EventEmitter<SDKEventMap>;
 
   constructor(config: SDKConfig) {
     if (!config.apiBaseUrl) {
@@ -55,11 +76,137 @@ export class SDKHttpClient {
     this.apiKey = config.apiKey;
     this.defaultHeaders = config.defaultHeaders ?? {};
     this.defaultTimeout = config.timeoutMs;
+    this.interceptors = new InterceptorManager();
+    this.events = new EventEmitter();
+
+    if (config.cache !== false) {
+      this.cache = new Cache(config.cache);
+    }
+
+    if (config.rateLimit !== false && config.rateLimit) {
+      this.rateLimiter = new RateLimiter(config.rateLimit);
+    }
+
+    if (config.circuitBreaker !== false) {
+      this.circuitBreaker = new CircuitBreaker(config.circuitBreaker);
+    }
+
+    this.retryConfig = config.retry;
+  }
+
+  getEvents(): EventEmitter<SDKEventMap> {
+    return this.events;
+  }
+
+  addRequestInterceptor(interceptor: RequestInterceptor): () => void {
+    return this.interceptors.addRequestInterceptor(interceptor);
+  }
+
+  addResponseInterceptor<T = unknown>(interceptor: ResponseInterceptor<T>): () => void {
+    return this.interceptors.addResponseInterceptor(interceptor);
+  }
+
+  addErrorInterceptor(interceptor: ErrorInterceptor): () => void {
+    return this.interceptors.addErrorInterceptor(interceptor);
+  }
+
+  getCache(): Cache<unknown> | undefined {
+    return this.cache;
+  }
+
+  getRateLimiter(): RateLimiter | undefined {
+    return this.rateLimiter;
+  }
+
+  getCircuitBreaker(): CircuitBreaker | undefined {
+    return this.circuitBreaker;
   }
 
   async request<TResponse>(
     path: string,
     options: InternalRequestOptions = {}
+  ): Promise<TResponse> {
+    const method = options.method ?? 'GET';
+    const cacheKey = this.cache
+      ? generateCacheKey(method, path, options.query, options.body)
+      : undefined;
+
+    if (this.cache && method === 'GET' && cacheKey) {
+      const cached = this.cache.get(cacheKey) as TResponse | undefined;
+      if (cached !== undefined) {
+        await this.events.emit('cache', { hit: true, key: cacheKey });
+        return cached;
+      }
+      await this.events.emit('cache', { hit: false, key: cacheKey });
+    }
+
+    let finalOptions = await this.interceptors.applyRequestInterceptors(options);
+
+    await this.events.emit('request', {
+      path,
+      method,
+      options: finalOptions,
+    });
+
+    const executeRequest = async (): Promise<TResponse> => {
+
+      if (this.rateLimiter) {
+        await this.rateLimiter.check(path);
+        const status = this.rateLimiter.getStatus(path);
+        await this.events.emit('rateLimit', {
+          key: path,
+          status: { remaining: status.remaining, resetAt: status.resetAt },
+        });
+      }
+
+      if (this.circuitBreaker) {
+        const state = this.circuitBreaker.getState();
+        await this.events.emit('circuitBreaker', { state });
+
+        return this.circuitBreaker.execute(async () => {
+          return this.executeRequest<TResponse>(path, finalOptions);
+        });
+      }
+
+      return this.executeRequest<TResponse>(path, finalOptions);
+    };
+
+    const response = this.retryConfig !== false
+      ? await withRetry(executeRequest, {
+          ...this.retryConfig,
+          shouldRetry: (error, attempt) => {
+
+            this.events.emit('retry', { attempt, error }).catch(() => {});
+            const config = this.retryConfig;
+            if (config && typeof config === 'object' && config.shouldRetry) {
+              return config.shouldRetry(error, attempt);
+            }
+            return shouldRetryError(error);
+          },
+        })
+      : await executeRequest();
+
+    const finalResponse = await this.interceptors.applyResponseInterceptors(
+      response,
+      finalOptions
+    );
+
+    if (this.cache && method === 'GET' && cacheKey) {
+      this.cache.set(cacheKey, finalResponse);
+    }
+
+    await this.events.emit('response', {
+      path,
+      method,
+      response: finalResponse,
+    });
+
+    return finalResponse;
+  }
+
+  private async executeRequest<TResponse>(
+    path: string,
+    options: InternalRequestOptions
   ): Promise<TResponse> {
     const method = options.method ?? 'GET';
     const url = this.buildUrl(path, options.query);
@@ -90,7 +237,9 @@ export class SDKHttpClient {
       });
 
       if (!response.ok) {
-        throw await this.parseError(response);
+        const error = await this.parseError(response);
+        await this.events.emit('error', { path, method, error });
+        throw error;
       }
 
       if (response.status === 204) {
@@ -105,17 +254,28 @@ export class SDKHttpClient {
       const text = await response.text();
       return text as unknown as TResponse;
     } catch (error) {
+
+      const processedError = await this.interceptors.applyErrorInterceptors(error, options);
+
+      if (processedError instanceof SDKError) {
+        throw processedError;
+      }
+
       if (error instanceof SDKError) {
         throw error;
       }
 
       if (error instanceof DOMException && error.name === 'AbortError') {
-        throw new SDKError('Request timed out', {
+        const timeoutError = new SDKError('Request timed out', {
           code: 'sdk_request_timeout',
         });
+        await this.events.emit('error', { path, method, error: timeoutError });
+        throw timeoutError;
       }
 
-      throw this.normalizeUnknownError(error);
+      const normalizedError = this.normalizeUnknownError(error);
+      await this.events.emit('error', { path, method, error: normalizedError });
+      throw normalizedError;
     } finally {
       if (timeoutId) {
         clearTimeout(timeoutId);

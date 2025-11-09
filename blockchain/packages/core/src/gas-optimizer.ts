@@ -1,4 +1,3 @@
-import type { Address, Hash } from 'viem';
 import { parseUnits } from 'viem';
 
 export interface GasOptimizationResult {
@@ -17,14 +16,12 @@ export interface GasEstimate {
   maxPriorityFeePerGas?: bigint;
 }
 
-const GAS_BUFFER_MULTIPLIER = 120n; // 120% = 1.2x
+const GAS_BUFFER_MULTIPLIER = 120n;
 const MIN_GAS_LIMIT = 21000n;
 const MAX_GAS_LIMIT = 30000000n;
 
 export class GasOptimizer {
-  /**
-   * Optimizes gas parameters for a transaction
-   */
+
   optimizeGas(
     estimate: GasEstimate,
     options?: {
@@ -40,39 +37,61 @@ export class GasOptimizer {
       maxPriorityFeePerGas,
     } = estimate;
 
-    // Optimize gas limit with buffer
-    let optimizedGasLimit = gasLimit;
+    let optimizedGasLimit = (gasLimit * GAS_BUFFER_MULTIPLIER) / 100n;
+
     if (optimizedGasLimit < MIN_GAS_LIMIT) {
       optimizedGasLimit = MIN_GAS_LIMIT;
     }
     if (optimizedGasLimit > MAX_GAS_LIMIT) {
       optimizedGasLimit = MAX_GAS_LIMIT;
     }
-    optimizedGasLimit = (optimizedGasLimit * GAS_BUFFER_MULTIPLIER) / 100n;
 
     const priority = options?.priority || 'normal';
     const useEIP1559 = options?.useEIP1559 ?? true;
 
     if (useEIP1559 && (maxFeePerGas || maxPriorityFeePerGas)) {
-      // EIP-1559 optimization
-      const baseFee = maxFeePerGas ? maxFeePerGas - (maxPriorityFeePerGas || 0n) : 0n;
-      let optimizedMaxPriorityFeePerGas = maxPriorityFeePerGas || parseUnits('2', 'gwei');
 
-      // Adjust based on priority
-      if (priority === 'low') {
-        optimizedMaxPriorityFeePerGas = parseUnits('1', 'gwei');
-      } else if (priority === 'high') {
-        optimizedMaxPriorityFeePerGas = parseUnits('5', 'gwei');
-      }
+      const priorityMultiplier = priority === 'low' ? 0.8 : priority === 'high' ? 1.2 : 1.0;
 
-      const optimizedMaxFeePerGas = baseFee + optimizedMaxPriorityFeePerGas;
+      const defaultMaxPriorityFeePerGas = parseUnits('2', 9);
+      const defaultMaxFeePerGas = parseUnits('30', 9);
+
+      const estimatedMaxPriorityFeePerGas = maxPriorityFeePerGas || defaultMaxPriorityFeePerGas;
+      const estimatedMaxFeePerGas = maxFeePerGas || defaultMaxFeePerGas;
+
+      let optimizedMaxPriorityFeePerGas = BigInt(
+        Math.floor(Number(estimatedMaxPriorityFeePerGas) * priorityMultiplier)
+      );
+
+      let optimizedMaxFeePerGas = BigInt(
+        Math.floor(Number(estimatedMaxFeePerGas) * priorityMultiplier)
+      );
 
       if (options?.maxGasPrice && optimizedMaxFeePerGas > options.maxGasPrice) {
+
+        const cappedMaxFee = options.maxGasPrice;
+
+        const estimatedBaseFee = estimatedMaxFeePerGas > estimatedMaxPriorityFeePerGas
+          ? estimatedMaxFeePerGas - estimatedMaxPriorityFeePerGas
+          : 0n;
+
+        const availableForPriority = cappedMaxFee - estimatedBaseFee;
+
+        optimizedMaxPriorityFeePerGas = optimizedMaxPriorityFeePerGas < availableForPriority
+          ? optimizedMaxPriorityFeePerGas
+          : availableForPriority;
+
+        if (optimizedMaxPriorityFeePerGas < 0n) {
+          optimizedMaxPriorityFeePerGas = 0n;
+        }
+
+        const estimatedSavings = optimizedMaxFeePerGas - cappedMaxFee;
+
         return {
           optimizedGasLimit,
-          optimizedMaxFeePerGas: options.maxGasPrice,
-          optimizedMaxPriorityFeePerGas: optimizedMaxPriorityFeePerGas,
-          estimatedSavings: optimizedMaxFeePerGas - options.maxGasPrice,
+          optimizedMaxFeePerGas: cappedMaxFee,
+          optimizedMaxPriorityFeePerGas,
+          estimatedSavings,
           confidence: 0.8,
         };
       }
@@ -84,13 +103,13 @@ export class GasOptimizer {
         confidence: 0.95,
       };
     } else {
-      // Legacy gas price optimization
-      let optimizedGasPrice = gasPrice || parseUnits('20', 'gwei');
+
+      let optimizedGasPrice = gasPrice || parseUnits('20', 9);
 
       if (priority === 'low') {
-        optimizedGasPrice = parseUnits('15', 'gwei');
+        optimizedGasPrice = parseUnits('15', 9);
       } else if (priority === 'high') {
-        optimizedGasPrice = parseUnits('30', 'gwei');
+        optimizedGasPrice = parseUnits('30', 9);
       }
 
       if (options?.maxGasPrice && optimizedGasPrice > options.maxGasPrice) {
@@ -105,9 +124,6 @@ export class GasOptimizer {
     }
   }
 
-  /**
-   * Estimates total gas cost
-   */
   estimateTotalCost(optimized: GasOptimizationResult): bigint {
     const gasPrice = optimized.optimizedGasPrice || optimized.optimizedMaxFeePerGas || 0n;
     return optimized.optimizedGasLimit * gasPrice;

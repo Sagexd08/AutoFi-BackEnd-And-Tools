@@ -62,9 +62,6 @@ export interface NFTMintConfig {
   requireApproval?: boolean;
 }
 
-/**
- * Mint an NFT with security checks
- */
 export async function mintNFT(
   celoClient: CeloClient,
   config: NFTMintConfig,
@@ -102,7 +99,7 @@ export async function mintNFT(
   };
 
   const result = await secureManager.mintSecureNFT(nftOperation);
-  
+
   return {
     success: result.success,
     transactionHash: result.result?.transactionHash,
@@ -112,9 +109,6 @@ export async function mintNFT(
   };
 }
 
-/**
- * Get NFT metadata
- */
 export async function getNFTMetadata(
   config: NFTMintConfig,
   contractAddress: Address,
@@ -127,7 +121,7 @@ export async function getNFTMetadata(
   });
 
   const metadata = await alchemyClient.getNFTMetadata(contractAddress, tokenId);
-  
+
   return {
     name: metadata.name,
     description: metadata.description,
@@ -138,9 +132,6 @@ export async function getNFTMetadata(
   };
 }
 
-/**
- * Get owned NFTs for an address
- */
 export async function getOwnedNFTs(
   config: NFTMintConfig,
   address: Address,
@@ -153,7 +144,7 @@ export async function getOwnedNFTs(
   });
 
   const nfts = await alchemyClient.getOwnedNFTs(address, contractAddress);
-  
+
   return nfts.map(nft => ({
     contractAddress: nft.contractAddress as Address,
     tokenId: nft.tokenId,
@@ -165,9 +156,6 @@ export async function getOwnedNFTs(
   }));
 }
 
-/**
- * Get NFT transfers for an address
- */
 export async function getNFTTransfers(
   config: NFTMintConfig,
   address: Address,
@@ -180,7 +168,7 @@ export async function getNFTTransfers(
   });
 
   const transfers = await alchemyClient.getNFTTransfers(address, category);
-  
+
   return transfers.map(transfer => ({
     from: transfer.from as Address,
     to: transfer.to as Address,
@@ -193,9 +181,6 @@ export async function getNFTTransfers(
   }));
 }
 
-/**
- * Get NFT collection information
- */
 export async function getNFTCollection(
   config: NFTMintConfig,
   contractAddress: Address
@@ -213,7 +198,7 @@ export async function getNFTCollection(
   });
 
   const collection = await alchemyClient.getNFTCollection(contractAddress);
-  
+
   return {
     name: collection.name || '',
     symbol: collection.symbol || '',
@@ -223,9 +208,6 @@ export async function getNFTCollection(
   };
 }
 
-/**
- * Batch mint multiple NFTs
- */
 export async function batchMintNFTs(
   celoClient: CeloClient,
   config: NFTMintConfig,
@@ -244,7 +226,7 @@ export async function batchMintNFTs(
 
   for (const param of params) {
     const result = await mintNFT(celoClient, config, param);
-    
+
     results.push({
       success: result.success,
       transactionHash: result.transactionHash,
@@ -260,9 +242,6 @@ export async function batchMintNFTs(
   return { results, overallSuccess };
 }
 
-/**
- * Create NFT metadata for events
- */
 export function createEventNFTMetadata(
   eventName: string,
   eventDate: string,

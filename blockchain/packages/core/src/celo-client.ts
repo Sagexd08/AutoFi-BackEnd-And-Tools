@@ -1,9 +1,9 @@
-import { 
-  createPublicClient, 
-  createWalletClient, 
-  http, 
-  Address, 
-  Hash, 
+import {
+  createPublicClient,
+  createWalletClient,
+  http,
+  Address,
+  Hash,
   Hex,
   PublicClient,
   WalletClient,
@@ -30,7 +30,7 @@ export class CeloClient {
   ) {
     this.chain = CELO_CHAINS[network];
     this.network = this.getNetworkConfigInternal(network);
-    
+
     if (rpcUrl) {
       this.network.rpcUrl = rpcUrl;
     }
@@ -191,13 +191,13 @@ export class CeloClient {
     const endBlock = toBlock || currentBlock;
 
     const transactions: Transaction[] = [];
-    
+
     for (let blockNum = startBlock; blockNum <= endBlock; blockNum++) {
-      const block = await this.publicClient.getBlock({ 
+      const block = await this.publicClient.getBlock({
         blockNumber: blockNum,
-        includeTransactions: true 
+        includeTransactions: true
       });
-      
+
       if (block.transactions) {
         for (const tx of block.transactions) {
           if (typeof tx === 'object' && (tx.from === address || tx.to === address)) {
@@ -243,7 +243,7 @@ export class CeloClient {
     });
 
     return transferEvents
-      .filter(event => 
+      .filter(event =>
         event.topics[1]?.toLowerCase() === address.toLowerCase() ||
         event.topics[2]?.toLowerCase() === address.toLowerCase()
       )
@@ -316,14 +316,14 @@ export class CeloClient {
     );
 
     const receipt = await this.waitForTransaction(result);
-    const event = receipt.logs.find(log => 
+    const event = receipt.logs.find(log =>
       log.topics[0] === "0x" + "AgentRegistered".padEnd(64, "0")
     );
-    
+
     if (event) {
       return BigInt(event.topics[1]);
     }
-    
+
     throw new Error("Failed to get agent ID from registration");
   }
 

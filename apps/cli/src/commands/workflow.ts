@@ -132,15 +132,15 @@ async function listWorkflows(apiUrl: string) {
 async function executeWorkflow(
   apiUrl: string,
   workflowId: string,
-  timeoutMs: number = 300000, // 5 minutes default
+  timeoutMs: number = 300000,
   maxRetries: number = 5,
-  pollIntervalMs: number = 2000 // Fixed interval for normal polling
+  pollIntervalMs: number = 2000
 ) {
   const startTime = Date.now();
   let lastKnownExecution: any = null;
   let consecutiveRetries = 0;
-  let retryBackoffMs = pollIntervalMs; // Start with poll interval, will double on retries
-  const maxBackoffMs = 30000; // 30 seconds max backoff
+  let retryBackoffMs = pollIntervalMs;
+  const maxBackoffMs = 30000;
 
   try {
     const response = await axios.post(`${apiUrl}/api/workflows/${workflowId}/execute`);
@@ -171,10 +171,10 @@ async function executeWorkflow(
         const statusResponse = await axios.get(
           `${apiUrl}/api/workflows/executions/${execution.id}`
         );
-        
+
         consecutiveRetries = 0;
         retryBackoffMs = pollIntervalMs;
-        
+
         lastKnownExecution = statusResponse.data.execution;
         status = lastKnownExecution.status;
 
@@ -204,7 +204,7 @@ async function executeWorkflow(
 
         retryBackoffMs = Math.min(retryBackoffMs * 2, maxBackoffMs);
         console.log(chalk.gray(`   Retrying in ${retryBackoffMs / 1000}s...`));
-        
+
         continue;
       }
     }
@@ -212,7 +212,7 @@ async function executeWorkflow(
     return status === 'completed';
   } catch (error: any) {
     console.error(chalk.red('\n❌ Error executing workflow:'), error.message);
-    
+
     if (lastKnownExecution) {
       console.log(chalk.yellow('\n📊 Latest known execution details:'));
       console.log(chalk.cyan(`  Execution ID: ${lastKnownExecution.id}`));
@@ -221,7 +221,7 @@ async function executeWorkflow(
         console.log(chalk.red(`  Error: ${lastKnownExecution.error}`));
       }
     }
-    
+
     throw error;
   }
 }

@@ -1,4 +1,4 @@
-// Core exports
+
 export { CeloClient } from "./celo-client";
 export { BlockScanner } from "./event-monitor";
 export { DecisionEngine } from "./decision-engine";
@@ -9,10 +9,8 @@ export { abiRegistry } from "./abi-registry";
 export { chainHealthMonitor } from "./chain-health";
 export { gasOptimizer } from "./gas-optimizer";
 
-// Functional API exports
 export * from "./functions";
 
-// Type exports
 export type {
   CeloNetworkConfig,
   AgentInfo,
@@ -38,7 +36,6 @@ export type {
   Proposal
 } from "./types";
 
-// Alchemy exports
 export type {
   AlchemyConfig,
   TransactionSecurityResult,
@@ -51,7 +48,6 @@ export type {
   TransactionApproval
 } from "./secure-transaction-manager";
 
-// Network configurations
 export const ALFAJORES_CONFIG = {
   chainId: 44787,
   name: "Celo Alfajores",

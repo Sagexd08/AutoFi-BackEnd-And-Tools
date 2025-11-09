@@ -32,7 +32,7 @@ const SENSITIVE_PATTERNS = [
 export function redactSensitiveFields(obj: any, depth = 0): any {
   if (depth > 10) return '[Max depth reached]';
   if (obj === null || obj === undefined) return obj;
-  
+
   if (typeof obj !== 'object') {
     return obj;
   }
@@ -44,7 +44,7 @@ export function redactSensitiveFields(obj: any, depth = 0): any {
   const redacted: Record<string, any> = {};
   for (const [key, value] of Object.entries(obj)) {
     const lowerKey = key.toLowerCase();
-    
+
     const isSensitive = SENSITIVE_FIELDS.some(field => lowerKey.includes(field)) ||
                        SENSITIVE_PATTERNS.some(pattern => pattern.test(lowerKey));
 
@@ -84,7 +84,7 @@ export function sanitizeErrorForLogging(err: any): any {
   const errorObj = { ...err };
   delete errorObj.stack;
   delete errorObj.details;
-  
+
   const additionalFields = redactSensitiveFields(errorObj);
   Object.assign(sanitized, additionalFields);
 

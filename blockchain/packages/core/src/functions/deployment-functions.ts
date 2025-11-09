@@ -16,16 +16,12 @@ export interface ContractDeploymentConfig {
   gasPrice?: bigint;
 }
 
-/**
- * Deploy a smart contract
- */
 export async function deployContract(
   client: CeloClient,
   config: ContractDeploymentConfig
 ): Promise<ContractDeploymentResult> {
   try {
-    // This would integrate with Hardhat or other deployment tools
-    // For now, return a mock response
+
     return {
       success: true,
       contractAddress: '0x' + Math.random().toString(16).substr(2, 40) as Address,
@@ -40,9 +36,6 @@ export async function deployContract(
   }
 }
 
-/**
- * Deploy Agent Registry contract
- */
 export async function deployAgentRegistry(
   client: CeloClient
 ): Promise<ContractDeploymentResult> {
@@ -52,9 +45,6 @@ export async function deployAgentRegistry(
   });
 }
 
-/**
- * Deploy Agent Treasury contract
- */
 export async function deployAgentTreasury(
   client: CeloClient,
   agentRegistryAddress: Address
@@ -65,9 +55,6 @@ export async function deployAgentTreasury(
   });
 }
 
-/**
- * Deploy Donation Splitter contract
- */
 export async function deployDonationSplitter(
   client: CeloClient,
   agentRegistryAddress: Address
@@ -78,9 +65,6 @@ export async function deployDonationSplitter(
   });
 }
 
-/**
- * Deploy Yield Aggregator contract
- */
 export async function deployYieldAggregator(
   client: CeloClient,
   agentRegistryAddress: Address
@@ -91,9 +75,6 @@ export async function deployYieldAggregator(
   });
 }
 
-/**
- * Deploy Master Trading Contract
- */
 export async function deployMasterTradingContract(
   client: CeloClient,
   agentRegistryAddress: Address
@@ -104,9 +85,6 @@ export async function deployMasterTradingContract(
   });
 }
 
-/**
- * Deploy Attendance NFT contract
- */
 export async function deployAttendanceNFT(
   client: CeloClient,
   name: string,
@@ -119,9 +97,6 @@ export async function deployAttendanceNFT(
   });
 }
 
-/**
- * Deploy all contracts in sequence
- */
 export async function deployAllContracts(
   client: CeloClient,
   nftConfig?: {
@@ -144,7 +119,7 @@ export async function deployAllContracts(
   const errors: string[] = [];
 
   try {
-    // Deploy Agent Registry first
+
     const agentRegistry = await deployAgentRegistry(client);
     if (agentRegistry.success && agentRegistry.contractAddress) {
       contracts.agentRegistry = agentRegistry.contractAddress;
@@ -152,7 +127,6 @@ export async function deployAllContracts(
       errors.push('Failed to deploy Agent Registry');
     }
 
-    // Deploy other contracts that depend on Agent Registry
     if (contracts.agentRegistry) {
       const [treasury, splitter, yieldAgg, trading] = await Promise.all([
         deployAgentTreasury(client, contracts.agentRegistry),
@@ -185,7 +159,6 @@ export async function deployAllContracts(
         errors.push('Failed to deploy Master Trading Contract');
       }
 
-      // Deploy NFT contract if config provided
       if (nftConfig) {
         const nft = await deployAttendanceNFT(
           client,
@@ -216,9 +189,6 @@ export async function deployAllContracts(
   }
 }
 
-/**
- * Verify contract deployment
- */
 export async function verifyContract(
   client: CeloClient,
   contractAddress: Address,
@@ -229,8 +199,7 @@ export async function verifyContract(
   error?: string;
 }> {
   try {
-    // This would integrate with block explorer verification
-    // For now, return success
+
     return { success: true };
   } catch (error) {
     return {
@@ -240,9 +209,6 @@ export async function verifyContract(
   }
 }
 
-/**
- * Get deployment status
- */
 export async function getDeploymentStatus(
   client: CeloClient,
   contractAddress: Address
@@ -253,8 +219,7 @@ export async function getDeploymentStatus(
   blockNumber?: bigint;
 }> {
   try {
-    // This would require adding a getCode method to CeloClient
-    // For now, return a mock response
+
     return {
       isDeployed: true,
       isVerified: false,

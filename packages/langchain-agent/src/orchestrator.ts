@@ -109,7 +109,7 @@ export class WorkflowOrchestrator {
     try {
       for (const action of workflow.actions) {
         const result = await this.executeAction(action);
-        
+
         if (!results[action.type]) {
           results[action.type] = [];
         }

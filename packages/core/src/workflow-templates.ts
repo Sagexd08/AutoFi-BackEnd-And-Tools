@@ -97,10 +97,10 @@ export const workflowTemplates: WorkflowTemplate[] = [
 
 export function saveWorkflowTemplate(template: WorkflowTemplate, outputDir: string = './examples') {
   const filename = join(outputDir, `${template.id}.json`);
-  
+
   try {
     mkdirSync(dirname(filename), { recursive: true });
-    
+
     writeFileSync(filename, JSON.stringify(template.workflow, null, 2));
     console.log(`Saved template to ${filename}`);
   } catch (error) {

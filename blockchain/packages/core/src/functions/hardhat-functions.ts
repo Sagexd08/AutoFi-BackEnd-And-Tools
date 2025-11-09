@@ -2,7 +2,6 @@ import { HardhatRuntimeEnvironment } from "hardhat/types";
 import { Contract } from "ethers";
 import { Address } from "viem";
 
-// Extend HardhatRuntimeEnvironment to include ethers
 interface ExtendedHRE extends HardhatRuntimeEnvironment {
   ethers: any;
 }
@@ -27,17 +26,13 @@ export interface ContractInfo {
   bytecode: string;
 }
 
-/**
- * Initialize Hardhat runtime environment
- */
 export async function initializeHardhat(config: HardhatConfig): Promise<ExtendedHRE> {
   const hre = require("hardhat") as ExtendedHRE;
-  
-  // Set network configuration
+
   if (config.network !== "hardhat") {
     const existingNetwork = hre.config.networks[config.network];
     if (existingNetwork && 'url' in existingNetwork) {
-      // Update existing network configuration
+
       if (config.rpcUrl) {
         (existingNetwork as any).url = config.rpcUrl;
       }
@@ -46,13 +41,10 @@ export async function initializeHardhat(config: HardhatConfig): Promise<Extended
       }
     }
   }
-  
+
   return hre;
 }
 
-/**
- * Deploy a contract using Hardhat
- */
 export async function deployHardhatContract(
   config: HardhatConfig,
   contractName: string,
@@ -60,14 +52,14 @@ export async function deployHardhatContract(
 ): Promise<DeploymentResult> {
   const hre = await initializeHardhat(config);
   const [deployer] = await hre.ethers.getSigners();
-  
+
   const ContractFactory = await hre.ethers.getContractFactory(contractName);
   const contract = await ContractFactory.deploy(...constructorArgs);
-  
+
   await contract.waitForDeployment();
   const contractAddress = await contract.getAddress();
   const deploymentTx = contract.deploymentTransaction();
-  
+
   return {
     contractAddress: contractAddress as Address,
     transactionHash: deploymentTx?.hash || "",
@@ -76,9 +68,6 @@ export async function deployHardhatContract(
   };
 }
 
-/**
- * Get contract instance
- */
 export async function getContract(
   config: HardhatConfig,
   contractName: string,
@@ -86,14 +75,11 @@ export async function getContract(
 ): Promise<Contract> {
   const hre = await initializeHardhat(config);
   const [signer] = await hre.ethers.getSigners();
-  
+
   const ContractFactory = await hre.ethers.getContractFactory(contractName);
   return ContractFactory.attach(contractAddress).connect(signer);
 }
 
-/**
- * Call a contract function
- */
 export async function callContractFunction(
   config: HardhatConfig,
   contractName: string,
@@ -105,9 +91,6 @@ export async function callContractFunction(
   return await contract[functionName](...args);
 }
 
-/**
- * Send a transaction to a contract
- */
 export async function sendContractTransaction(
   config: HardhatConfig,
   contractName: string,
@@ -121,16 +104,13 @@ export async function sendContractTransaction(
   return await tx.wait();
 }
 
-/**
- * Get contract ABI and bytecode
- */
 export async function getContractInfo(
   config: HardhatConfig,
   contractName: string
 ): Promise<ContractInfo> {
   const hre = await initializeHardhat(config);
   const ContractFactory = await hre.ethers.getContractFactory(contractName);
-  
+
   return {
     name: contractName,
     address: "0x0000000000000000000000000000000000000000" as Address,
@@ -139,16 +119,13 @@ export async function getContractInfo(
   };
 }
 
-/**
- * Verify contract on block explorer
- */
 export async function verifyHardhatContract(
   config: HardhatConfig,
   contractAddress: Address,
   constructorArgs: any[] = []
 ): Promise<boolean> {
   const hre = await initializeHardhat(config);
-  
+
   try {
     await hre.run("verify:verify", {
       address: contractAddress,
@@ -161,9 +138,6 @@ export async function verifyHardhatContract(
   }
 }
 
-/**
- * Get network information
- */
 export async function getNetworkInfo(config: HardhatConfig): Promise<{
   name: string;
   chainId: number;
@@ -174,7 +148,7 @@ export async function getNetworkInfo(config: HardhatConfig): Promise<{
   const network = await hre.ethers.provider.getNetwork();
   const blockNumber = await hre.ethers.provider.getBlockNumber();
   const feeData = await hre.ethers.provider.getFeeData();
-  
+
   return {
     name: network.name,
     chainId: Number(network.chainId),
@@ -183,9 +157,6 @@ export async function getNetworkInfo(config: HardhatConfig): Promise<{
   };
 }
 
-/**
- * Get account balance
- */
 export async function getAccountBalance(
   config: HardhatConfig,
   address: Address
@@ -195,9 +166,6 @@ export async function getAccountBalance(
   return balance.toString();
 }
 
-/**
- * Transfer CELO
- */
 export async function transferCELO(
   config: HardhatConfig,
   to: Address,
@@ -205,21 +173,18 @@ export async function transferCELO(
 ): Promise<any> {
   const hre = await initializeHardhat(config);
   const [signer] = await hre.ethers.getSigners();
-  
+
   const tx = await signer.sendTransaction({
     to,
     value: hre.ethers.parseEther(amount),
   });
-  
+
   return await tx.wait();
 }
 
-/**
- * Compile contracts
- */
 export async function compileContracts(config: HardhatConfig): Promise<boolean> {
   const hre = await initializeHardhat(config);
-  
+
   try {
     await hre.run("compile");
     return true;
@@ -229,12 +194,9 @@ export async function compileContracts(config: HardhatConfig): Promise<boolean> 
   }
 }
 
-/**
- * Run tests
- */
 export async function runTests(config: HardhatConfig): Promise<boolean> {
   const hre = await initializeHardhat(config);
-  
+
   try {
     await hre.run("test");
     return true;

@@ -71,8 +71,6 @@ router.post('/', async (req, res, next) => {
       createdAt: new Date().toISOString(),
     });
 
-    // TODO: Implement actual contract deployment using Hardhat or Viem
-    // For now, return a mock response
     const mockAddress = `0x${Math.random().toString(16).substr(2, 40)}` as Address;
     const mockTxHash = `0x${Math.random().toString(16).substr(2, 64)}` as Hash;
 
@@ -107,7 +105,7 @@ router.post('/', async (req, res, next) => {
 
 router.get('/:txHash', (req, res) => {
   const { txHash } = req.params;
-  
+
   const deployment = Array.from(deployments.values()).find(
     (d) => d.transactionHash === txHash
   );

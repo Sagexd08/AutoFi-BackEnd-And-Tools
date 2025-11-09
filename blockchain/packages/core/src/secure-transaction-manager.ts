@@ -36,9 +36,6 @@ export class SecureTransactionManager {
     this.config = config;
   }
 
-  /**
-   * Execute a secure transaction with full security analysis
-   */
   async executeSecureTransaction(
     request: TransactionRequest,
     approval?: TransactionApproval
@@ -50,7 +47,7 @@ export class SecureTransactionManager {
     error?: string;
   }> {
     try {
-      // Step 1: Security Analysis
+
       const securityResult = await this.alchemyClient.analyzeTransactionSecurity(
         request.to,
         request.value || BigInt(0),
@@ -58,7 +55,6 @@ export class SecureTransactionManager {
         request.from
       );
 
-      // Step 2: Check if transaction meets security requirements
       if (securityResult.riskScore > this.config.maxRiskScore) {
         return {
           success: false,
@@ -67,7 +63,6 @@ export class SecureTransactionManager {
         };
       }
 
-      // Step 3: Check approval requirements
       if (this.config.requireApproval && !approval?.approved) {
         return {
           success: false,
@@ -76,7 +71,6 @@ export class SecureTransactionManager {
         };
       }
 
-      // Step 4: Simulate transaction if enabled
       if (this.config.enableSimulation) {
         const simulation = await this.alchemyClient.simulateTransaction(
           request.from || '0x0000000000000000000000000000000000000000',
@@ -94,9 +88,8 @@ export class SecureTransactionManager {
         }
       }
 
-      // Step 5: Execute transaction with optimized gas
-      const gasLimit = this.config.enableGasOptimization 
-        ? securityResult.gasEstimate.recommended 
+      const gasLimit = this.config.enableGasOptimization
+        ? securityResult.gasEstimate.recommended
         : securityResult.gasEstimate.max;
 
       const transactionHash = await this.celoClient.sendTransaction({
@@ -129,9 +122,6 @@ export class SecureTransactionManager {
     }
   }
 
-  /**
-   * Mint NFT with security checks
-   */
   async mintSecureNFT(
     operation: NFTOperation,
     approval?: TransactionApproval
@@ -142,15 +132,14 @@ export class SecureTransactionManager {
     error?: string;
   }> {
     try {
-      // Security analysis for NFT minting
+
       const securityResult = await this.alchemyClient.analyzeTransactionSecurity(
         operation.contractAddress,
-        BigInt(0), // NFT minting typically doesn't involve value transfer
+        BigInt(0),
         undefined,
         operation.from
       );
 
-      // Check approval if required
       if (this.config.requireApproval && !approval?.approved) {
         return {
           success: false,
@@ -159,7 +148,6 @@ export class SecureTransactionManager {
         };
       }
 
-      // Execute NFT minting
       const result = await this.alchemyClient.mintNFT(operation);
 
       return {
@@ -187,9 +175,6 @@ export class SecureTransactionManager {
     }
   }
 
-  /**
-   * Batch execute multiple secure transactions
-   */
   async executeBatchTransactions(
     requests: TransactionRequest[],
     approvals?: TransactionApproval[]
@@ -209,7 +194,7 @@ export class SecureTransactionManager {
         requests[i],
         approvals?.[i]
       );
-      
+
       results.push({
         success: result.success,
         transactionHash: result.transactionHash,
@@ -224,9 +209,6 @@ export class SecureTransactionManager {
     return { results, overallSuccess };
   }
 
-  /**
-   * Get transaction security recommendations
-   */
   async getSecurityRecommendations(
     to: Address,
     value: bigint,
@@ -237,7 +219,7 @@ export class SecureTransactionManager {
     suggestedGasLimit: bigint;
   }> {
     const securityResult = await this.alchemyClient.analyzeTransactionSecurity(to, value, data);
-    
+
     return {
       recommendations: securityResult.recommendations,
       riskFactors: securityResult.warnings,
@@ -245,9 +227,6 @@ export class SecureTransactionManager {
     };
   }
 
-  /**
-   * Validate transaction before execution
-   */
   async validateTransaction(request: TransactionRequest): Promise<ValidationResult> {
     try {
       const securityResult = await this.alchemyClient.analyzeTransactionSecurity(
@@ -258,7 +237,7 @@ export class SecureTransactionManager {
       );
 
       const isValid = securityResult.isSecure && securityResult.riskScore <= this.config.maxRiskScore;
-      
+
       return {
         isValid,
         errors: [],
@@ -279,16 +258,10 @@ export class SecureTransactionManager {
     }
   }
 
-  /**
-   * Update security configuration
-   */
   updateSecurityConfig(newConfig: Partial<SecureTransactionConfig>): void {
     this.config = { ...this.config, ...newConfig };
   }
 
-  /**
-   * Get current security configuration
-   */
   getSecurityConfig(): SecureTransactionConfig {
     return { ...this.config };
   }

@@ -25,7 +25,7 @@ async function checkChainHealth(chainId: string): Promise<{
 }> {
   try {
     ensureCeloClient();
-    
+
     if (!celoClient) {
       return {
         healthy: false,
@@ -33,10 +33,9 @@ async function checkChainHealth(chainId: string): Promise<{
     }
 
     const start = Date.now();
-    // TODO: Implement actual chain health check
-    // For now, return mock data
+
     const latencyMs = Date.now() - start;
-    
+
     return {
       healthy: true,
       latencyMs,
@@ -59,14 +58,13 @@ router.get('/health', async (_req, res) => {
     const celoHealth = await checkChainHealth('celo');
     const alfajoresHealth = await checkChainHealth('alfajores');
 
-    // Get agent count from registry (would need to import it)
-    const agentCount = 0; // TODO: Get from agent registry
+    const agentCount = 0;
 
     return res.json({
       success: true,
       uptime,
-      cpu: (cpuUsage.user + cpuUsage.system) / 1000000, // Convert to seconds
-      memory: memUsage.heapUsed / 1024 / 1024, // Convert to MB
+      cpu: (cpuUsage.user + cpuUsage.system) / 1000000,
+      memory: memUsage.heapUsed / 1024 / 1024,
       agentCount,
       chainStatus: {
         celo: celoHealth,

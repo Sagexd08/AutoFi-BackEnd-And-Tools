@@ -27,13 +27,12 @@ class ChainHealthMonitor {
   }
 
   private setupDefaultRPCs(): void {
-    // Celo Alfajores
+
     this.rpcConfigs.set(44787, [
       { url: 'https://alfajores-forno.celo-testnet.org', priority: 1 },
       { url: 'https://alfajores.infura.io/v3/YOUR_KEY', priority: 2 },
     ]);
 
-    // Celo Mainnet
     this.rpcConfigs.set(42220, [
       { url: 'https://forno.celo.org', priority: 1 },
       { url: 'https://celo-mainnet.infura.io/v3/YOUR_KEY', priority: 2 },
@@ -70,7 +69,6 @@ class ChainHealthMonitor {
       };
     }
 
-    // Try RPCs in priority order
     for (const rpc of rpcs) {
       try {
         const start = Date.now();
@@ -93,12 +91,11 @@ class ChainHealthMonitor {
         this.healthCache.set(chainId, status);
         return status;
       } catch (error) {
-        // Try next RPC
+
         continue;
       }
     }
 
-    // All RPCs failed
     const status: ChainHealthStatus = {
       chainId,
       healthy: false,

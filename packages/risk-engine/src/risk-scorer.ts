@@ -13,7 +13,6 @@ import {
   combineValidationResults,
   validateSpendingLimits,
   validateTransactionStructure,
-  type ValidationResultWithFindings,
 } from './validators.js';
 
 const DEFAULT_APPROVAL_THRESHOLD = 0.6;
@@ -195,7 +194,7 @@ export class RiskEngine {
     };
 
     const assessment = await this.scoreTransaction(input);
-    
+
     return {
       isValid: !assessment.blockExecution,
       riskScore: assessment.normalizedRisk,

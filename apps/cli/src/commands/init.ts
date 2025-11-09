@@ -52,7 +52,7 @@ export async function initCommand() {
 
   try {
     writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2));
-    chmodSync(CONFIG_FILE, 0o600); // Owner read/write only
+    chmodSync(CONFIG_FILE, 0o600);
     console.log(chalk.green(`\n✅ Configuration saved to ${CONFIG_FILE}`));
     console.log(chalk.yellow('⚠️  Configuration contains sensitive data. Keep it secure.'));
   } catch (error) {

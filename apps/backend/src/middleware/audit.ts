@@ -24,7 +24,6 @@ export function auditLog(entry: Omit<AuditLogEntry, 'timestamp'>): void {
   auditLogs.push(logEntry);
   logger.info('Audit log', logEntry);
 
-  // Keep only last 10000 entries in memory
   if (auditLogs.length > 10000) {
     auditLogs.shift();
   }

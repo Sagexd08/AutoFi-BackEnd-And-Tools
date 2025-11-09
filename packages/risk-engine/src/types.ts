@@ -131,6 +131,18 @@ export interface TransactionRiskCandidate {
   chainId?: number;
 }
 
+export interface ChainHealthInfo {
+  healthy: boolean;
+  latencyMs?: number;
+  blockNumber?: bigint;
+}
+
+export interface ChainHealthInfoDTO {
+  healthy: boolean;
+  latencyMs?: number;
+  blockNumber?: bigint | number | string;
+}
+
 export interface RiskEvaluationInput {
   transaction: TransactionRiskCandidate & {
     operationType?: string;
@@ -146,7 +158,27 @@ export interface RiskEvaluationInput {
     knownContracts?: Address[];
     trustedProtocols?: Address[];
     sanctionedAddresses?: Address[];
-    chainHealth?: Record<string, { healthy: boolean; latencyMs?: number; blockNumber?: bigint | number | string }>;
+    chainHealth?: Record<string, ChainHealthInfo>;
+  };
+  overrides?: RiskOverride;
+}
+
+export interface RiskEvaluationInputDTO {
+  transaction: TransactionRiskCandidate & {
+    operationType?: string;
+  };
+  agent?: AgentRiskProfile;
+  history?: {
+    averageValue?: string;
+    standardDeviation?: string;
+    last24hCount?: number;
+    avgRiskScore?: number;
+  };
+  context?: {
+    knownContracts?: Address[];
+    trustedProtocols?: Address[];
+    sanctionedAddresses?: Address[];
+    chainHealth?: Record<string, ChainHealthInfoDTO>;
   };
   overrides?: RiskOverride;
 }
@@ -194,4 +226,99 @@ export interface ValidationResult {
   warnings: string[];
   recommendations: string[];
   errors?: string[];
+}
+
+export function toBlockNumberBigInt(value: bigint | number | string | undefined | null): bigint | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+  if (typeof value === 'bigint') {
+    return value;
+  }
+  if (typeof value === 'number') {
+    return BigInt(Math.trunc(value));
+  }
+  if (typeof value === 'string') {
+    try {
+      return BigInt(value);
+    } catch (error) {
+      throw new Error(`Invalid blockNumber format: "${value}". Expected a valid number string.`);
+    }
+  }
+  throw new Error(`Invalid blockNumber type: ${typeof value}. Expected bigint, number, or string.`);
+}
+
+export function fromBlockNumberBigInt(value: bigint | undefined): string | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  return value.toString();
+}
+
+export function toChainHealthInfo(dto: ChainHealthInfoDTO): ChainHealthInfo {
+  return {
+    healthy: dto.healthy,
+    latencyMs: dto.latencyMs,
+    blockNumber: toBlockNumberBigInt(dto.blockNumber),
+  };
+}
+
+export function fromChainHealthInfo(info: ChainHealthInfo): ChainHealthInfoDTO {
+  return {
+    healthy: info.healthy,
+    latencyMs: info.latencyMs,
+    blockNumber: fromBlockNumberBigInt(info.blockNumber),
+  };
+}
+
+export function toRiskEvaluationInput(dto: RiskEvaluationInputDTO): RiskEvaluationInput {
+  const result: RiskEvaluationInput = {
+    transaction: dto.transaction,
+    agent: dto.agent,
+    history: dto.history,
+    overrides: dto.overrides,
+  };
+
+  if (dto.context) {
+    result.context = {
+      knownContracts: dto.context.knownContracts,
+      trustedProtocols: dto.context.trustedProtocols,
+      sanctionedAddresses: dto.context.sanctionedAddresses,
+    };
+
+    if (dto.context.chainHealth) {
+      result.context.chainHealth = {};
+      for (const [chainId, healthDto] of Object.entries(dto.context.chainHealth)) {
+        result.context.chainHealth[chainId] = toChainHealthInfo(healthDto);
+      }
+    }
+  }
+
+  return result;
+}
+
+export function fromRiskEvaluationInput(input: RiskEvaluationInput): RiskEvaluationInputDTO {
+  const result: RiskEvaluationInputDTO = {
+    transaction: input.transaction,
+    agent: input.agent,
+    history: input.history,
+    overrides: input.overrides,
+  };
+
+  if (input.context) {
+    result.context = {
+      knownContracts: input.context.knownContracts,
+      trustedProtocols: input.context.trustedProtocols,
+      sanctionedAddresses: input.context.sanctionedAddresses,
+    };
+
+    if (input.context.chainHealth) {
+      result.context.chainHealth = {};
+      for (const [chainId, healthInfo] of Object.entries(input.context.chainHealth)) {
+        result.context.chainHealth[chainId] = fromChainHealthInfo(healthInfo);
+      }
+    }
+  }
+
+  return result;
 }

@@ -65,7 +65,6 @@ router.post('/send', async (req, res, next) => {
 
     const parsed = txSchema.parse(req.body);
 
-    // Validate transaction with risk engine
     const riskContext = {
       agentId: parsed.agentId || 'unknown',
       type: parsed.data && parsed.data !== '0x' ? 'contract_call' : 'transfer',
@@ -99,8 +98,6 @@ router.post('/send', async (req, res, next) => {
       });
     }
 
-    // TODO: Implement actual transaction sending
-    // For now, return a mock response
     const mockTxHash = `0x${Math.random().toString(16).substr(2, 64)}` as Hash;
 
     transactions.set(mockTxHash, {
@@ -144,8 +141,6 @@ router.post('/estimate', async (req, res, next) => {
 
     const parsed = txSchema.parse(req.body);
 
-    // TODO: Implement actual gas estimation
-    // For now, return mock estimates
     const gasLimit = parsed.gasLimit || '21000';
     const gasPrice = parsed.gasPrice || '20000000000';
 

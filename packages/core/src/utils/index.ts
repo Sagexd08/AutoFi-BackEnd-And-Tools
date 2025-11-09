@@ -16,14 +16,14 @@ export function formatAmount(amount: bigint | string, decimals: number = 18): st
   const divisor = BigInt(10 ** decimals);
   const whole = amountBigInt / divisor;
   const fraction = amountBigInt % divisor;
-  
+
   if (fraction === BigInt(0)) {
     return whole.toString();
   }
-  
+
   const fractionStr = fraction.toString().padStart(decimals, '0');
   const trimmed = fractionStr.replace(/0+$/, '');
-  
+
   return `${whole}.${trimmed}`;
 }
 
@@ -61,7 +61,7 @@ export async function retry<T>(
       return await fn();
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      
+
       if (i === maxRetries) {
         throw lastError;
       }

@@ -28,9 +28,6 @@ export interface SecurityAnalysisResult {
   };
 }
 
-/**
- * Analyze transaction security using Alchemy
- */
 export async function analyzeTransactionSecurity(
   config: SecurityConfig,
   to: Address,
@@ -45,7 +42,7 @@ export async function analyzeTransactionSecurity(
   });
 
   const result = await alchemyClient.analyzeTransactionSecurity(to, value, data, from);
-  
+
   return {
     isSecure: result.isSecure,
     riskScore: result.riskScore,
@@ -55,9 +52,6 @@ export async function analyzeTransactionSecurity(
   };
 }
 
-/**
- * Execute a secure transaction with full security analysis
- */
 export async function executeSecureTransaction(
   celoClient: CeloClient,
   config: SecurityConfig,
@@ -87,7 +81,7 @@ export async function executeSecureTransaction(
   );
 
   const result = await secureManager.executeSecureTransaction(transaction);
-  
+
   return {
     success: result.success,
     transactionHash: result.transactionHash,
@@ -103,9 +97,6 @@ export async function executeSecureTransaction(
   };
 }
 
-/**
- * Validate transaction before execution
- */
 export async function validateTransaction(
   config: SecurityConfig,
   transaction: TransactionRequest
@@ -123,7 +114,7 @@ export async function validateTransaction(
   });
 
   const celoClient = new CeloClient(
-    '0x0000000000000000000000000000000000000000', // Dummy key for validation
+    '0x0000000000000000000000000000000000000000',
     config.network
   );
 
@@ -139,7 +130,7 @@ export async function validateTransaction(
   );
 
   const result = await secureManager.validateTransaction(transaction);
-  
+
   return {
     isValid: result.isValid,
     warnings: result.warnings,
@@ -149,9 +140,6 @@ export async function validateTransaction(
   };
 }
 
-/**
- * Get security recommendations for a transaction
- */
 export async function getSecurityRecommendations(
   config: SecurityConfig,
   to: Address,
@@ -169,7 +157,7 @@ export async function getSecurityRecommendations(
   });
 
   const celoClient = new CeloClient(
-    '0x0000000000000000000000000000000000000000', // Dummy key for analysis
+    '0x0000000000000000000000000000000000000000',
     config.network
   );
 
@@ -187,9 +175,6 @@ export async function getSecurityRecommendations(
   return await secureManager.getSecurityRecommendations(to, value, data);
 }
 
-/**
- * Check if an address is safe for transactions
- */
 export async function isAddressSafe(
   config: SecurityConfig,
   address: Address
@@ -205,18 +190,17 @@ export async function isAddressSafe(
   });
 
   try {
-    // This would use Alchemy's security APIs
-    // For now, return basic validation
+
     const balance = await alchemyClient['alchemy'].core.getBalance(address);
-    
-    if (balance.gt('100000000000000000')) { // > 0.1 CELO
+
+    if (balance.gt('100000000000000000')) {
       return { isSafe: true, reputation: 'verified' };
     }
-    
+
     return { isSafe: false, reputation: 'unknown' };
   } catch (error) {
-    return { 
-      isSafe: false, 
+    return {
+      isSafe: false,
       reputation: 'unknown',
       warnings: ['Unable to verify address safety']
     };

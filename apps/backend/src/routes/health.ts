@@ -9,7 +9,6 @@ router.get('/', async (_req, res) => {
   const memUsage = process.memoryUsage();
   const cpuUsage = process.cpuUsage();
 
-  // Get agent count (would need to import from agents route)
   const agentCount = activeAgentsGauge.get() || 0;
 
   res.json({

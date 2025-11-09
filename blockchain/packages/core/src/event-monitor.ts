@@ -48,19 +48,19 @@ export class BlockScanner {
 
   private async scanNewBlocks(): Promise<void> {
     const currentBlock = await this.client.getBlockNumber();
-    
+
     if (currentBlock > this.lastScannedBlock) {
       console.log(`📦 Scanning blocks ${this.lastScannedBlock + 1n} to ${currentBlock}`);
-      
+
       for (let blockNum = this.lastScannedBlock + 1n; blockNum <= currentBlock; blockNum++) {
         const blockEvents = await this.scanBlock(blockNum);
-        
-        if (blockEvents.transactions.length > 0 || 
-            blockEvents.transfers.length > 0 || 
+
+        if (blockEvents.transactions.length > 0 ||
+            blockEvents.transfers.length > 0 ||
             blockEvents.contractEvents.length > 0) {
-          
+
           console.log(`📊 Block ${blockNum}: ${blockEvents.transactions.length} txs, ${blockEvents.transfers.length} transfers, ${blockEvents.contractEvents.length} events`);
-          
+
           this.eventCallbacks.forEach((callback, id) => {
             try {
               callback(blockEvents);
@@ -70,14 +70,14 @@ export class BlockScanner {
           });
         }
       }
-      
+
       this.lastScannedBlock = currentBlock;
     }
   }
 
   async scanBlock(blockNumber: bigint): Promise<BlockEvents> {
     const block = await this.client.getBlock({ blockNumber, includeTransactions: true });
-    
+
     const transactions: Transaction[] = [];
     const transfers: TokenTransfer[] = [];
     const contractEvents: Event[] = [];

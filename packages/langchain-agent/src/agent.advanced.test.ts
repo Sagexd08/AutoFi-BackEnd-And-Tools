@@ -166,13 +166,13 @@ describe('WorkflowOrchestrator - Advanced', () => {
 
   describe('Workflow Validation', () => {
     it('should handle empty workflow interpretation', async () => {
-      // Skip actual API call - just test structure
+
       expect(typeof orchestrator.interpretWorkflow).toBe('function');
     });
 
     it('should handle complex workflow requests', async () => {
       const complexRequest = 'Create a workflow that transfers 1 CELO to address 0x123... every day at 3pm';
-      // Skip actual API call - just test structure
+
       expect(typeof orchestrator.interpretWorkflow).toBe('function');
       expect(complexRequest.length).toBeGreaterThan(0);
     });
@@ -206,13 +206,13 @@ describe('WorkflowOrchestrator - Advanced', () => {
           expect(result).toHaveProperty('error');
         }
       } catch (error) {
-        // Expected to fail without network connection
+
         expect(error).toBeDefined();
       }
     });
 
     it('should handle workflow explanation', async () => {
-      // Skip actual API call - just test structure
+
       expect(typeof orchestrator.explainWorkflow).toBe('function');
       expect(mockWorkflow).toBeDefined();
       expect(mockWorkflow.actions.length).toBeGreaterThan(0);
@@ -231,7 +231,7 @@ describe('WorkflowOrchestrator - Advanced', () => {
         const result = await (orchestrator as any).executeAction(transferAction);
         expect(result).toHaveProperty('success');
       } catch (error) {
-        // Expected to fail without network connection
+
         expect(error).toBeDefined();
       }
     });
@@ -249,7 +249,7 @@ describe('WorkflowOrchestrator - Advanced', () => {
         const result = await (orchestrator as any).executeAction(contractAction);
         expect(result).toHaveProperty('success');
       } catch (error) {
-        // Expected to fail without network connection
+
         expect(error).toBeDefined();
       }
     });

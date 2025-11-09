@@ -24,9 +24,6 @@ export interface TransactionResult {
   error?: string;
 }
 
-/**
- * Create a new Celo agent instance
- */
 export function createCeloAgent(config: CeloAgentConfig): CeloClient {
   return new CeloClient(
     config.privateKey,
@@ -35,9 +32,6 @@ export function createCeloAgent(config: CeloAgentConfig): CeloClient {
   );
 }
 
-/**
- * Get token balance for an address
- */
 export async function getTokenBalance(
   client: CeloClient,
   address: Address,
@@ -47,9 +41,6 @@ export async function getTokenBalance(
   return balance.toString();
 }
 
-/**
- * Get native CELO balance
- */
 export async function getCELOBalance(
   client: CeloClient,
   address: Address
@@ -58,9 +49,6 @@ export async function getCELOBalance(
   return balance.toString();
 }
 
-/**
- * Send native CELO tokens
- */
 export async function sendCELO(
   client: CeloClient,
   to: Address,
@@ -80,9 +68,6 @@ export async function sendCELO(
   }
 }
 
-/**
- * Send ERC20 tokens
- */
 export async function sendToken(
   client: CeloClient,
   token: Address,
@@ -103,16 +88,10 @@ export async function sendToken(
   }
 }
 
-/**
- * Get network configuration
- */
 export function getNetworkConfig(client: CeloClient): CeloNetworkConfig {
   return client.getNetworkConfig();
 }
 
-/**
- * Get all token balances for an address
- */
 export async function getAllTokenBalances(
   client: CeloClient,
   address: Address
@@ -120,7 +99,6 @@ export async function getAllTokenBalances(
   const network = client.getNetworkConfig();
   const balances: TokenBalance[] = [];
 
-  // Get CELO balance
   const celoBalance = await client.getBalance(address);
   balances.push({
     token: network.tokens.CELO,
@@ -129,7 +107,6 @@ export async function getAllTokenBalances(
     symbol: 'CELO'
   });
 
-  // Get cUSD balance
   const cusdBalance = await client.getTokenBalance(address, network.tokens.cUSD);
   balances.push({
     token: network.tokens.cUSD,
@@ -138,7 +115,6 @@ export async function getAllTokenBalances(
     symbol: 'cUSD'
   });
 
-  // Get cEUR balance
   const ceurBalance = await client.getTokenBalance(address, network.tokens.cEUR);
   balances.push({
     token: network.tokens.cEUR,
@@ -150,9 +126,6 @@ export async function getAllTokenBalances(
   return balances;
 }
 
-/**
- * Estimate gas for a transaction
- */
 export async function estimateGas(
   client: CeloClient,
   to: Address,
@@ -166,9 +139,6 @@ export async function estimateGas(
   });
 }
 
-/**
- * Wait for transaction confirmation
- */
 export async function waitForTransaction(
   client: CeloClient,
   hash: Hash

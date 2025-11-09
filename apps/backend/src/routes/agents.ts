@@ -64,8 +64,8 @@ function ensureDependencies() {
   if (!riskEngine) {
     riskEngine = new RiskEngine({
       maxRiskScore: process.env.MAX_RISK_SCORE ? Number(process.env.MAX_RISK_SCORE) : 0.95,
-      approvalThreshold: 0.6,
-      blockThreshold: 0.85,
+      approvalThreshold: process.env.APPROVAL_THRESHOLD ? parseFloat(process.env.APPROVAL_THRESHOLD) : 0.6,
+      blockThreshold: process.env.BLOCK_THRESHOLD ? parseFloat(process.env.BLOCK_THRESHOLD) : 0.85,
     });
   }
 

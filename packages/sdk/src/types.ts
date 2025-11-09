@@ -1,26 +1,35 @@
+
 import type { Workflow } from '@celo-automator/types';
+import type {
+  RetryConfig,
+  CacheConfig,
+  RateLimiterConfig,
+  CircuitBreakerConfig,
+} from './utils/index.js';
 
 export interface SDKConfig {
-  /**
-   * Base URL of the Celo AI backend API, e.g. https://api.celo-ai.dev.
-   */
+
   apiBaseUrl: string;
-  /**
-   * Optional API key sent via the Authorization header.
-   */
+
   apiKey?: string;
-  /**
-   * Default agent identifier used by processPrompt when one is not provided.
-   */
+
   defaultAgentId?: string;
-  /**
-   * Optional default request timeout in milliseconds.
-   */
+
   timeoutMs?: number;
-  /**
-   * Additional headers that should be sent with every request.
-   */
+
   defaultHeaders?: Record<string, string>;
+
+  retry?: RetryConfig | false;
+
+  cache?: CacheConfig | false;
+
+  rateLimit?: RateLimiterConfig | false;
+
+  circuitBreaker?: CircuitBreakerConfig | false;
+
+  validateRequests?: boolean;
+
+  validateResponses?: boolean;
 }
 
 export interface InternalRequestOptions {

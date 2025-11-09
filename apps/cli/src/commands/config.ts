@@ -43,7 +43,7 @@ export async function configCommand(options: any) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         console.error(chalk.red(`❌ Configuration file is corrupted: ${errorMessage}`));
         console.error(chalk.yellow(`   Falling back to empty configuration.`));
-        
+
         try {
           const backupPath = `${CONFIG_FILE}.corrupted.${Date.now()}`;
           renameSync(CONFIG_FILE, backupPath);

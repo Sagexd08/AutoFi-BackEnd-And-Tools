@@ -77,7 +77,7 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 
   if (process.env.NODE_ENV !== 'production') {
     response.error = err.message || 'Internal server error';
-    
+
     if (err.stack) {
       response.details = {
         stack: err.stack

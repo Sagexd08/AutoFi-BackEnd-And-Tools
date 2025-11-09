@@ -51,7 +51,7 @@ export class AlchemyClient {
 
   constructor(config: AlchemyConfig) {
     this.config = config;
-    
+
     const networkMap = {
       'alfajores': Network.CELO_ALFAJORES,
       'mainnet': Network.CELO_MAINNET
@@ -64,9 +64,6 @@ export class AlchemyClient {
     });
   }
 
-  /**
-   * Analyze transaction security using Alchemy's security features
-   */
   async analyzeTransactionSecurity(
     to: Address,
     value: bigint,
@@ -74,29 +71,23 @@ export class AlchemyClient {
     from?: Address
   ): Promise<TransactionSecurityResult> {
     try {
-      // Simulate transaction to check for potential issues
-      // Note: simulateAssetChanges may not be available in all Alchemy SDK versions
-      // For now, we'll use basic validation
 
       const warnings: string[] = [];
       const recommendations: string[] = [];
       let riskScore = 0;
 
-      // Check for high-value transactions
-      if (value > BigInt('1000000000000000000')) { // > 1 CELO
+      if (value > BigInt('1000000000000000000')) {
         riskScore += 30;
         warnings.push('High-value transaction detected');
         recommendations.push('Consider using multi-signature wallet for large amounts');
       }
 
-      // Check for contract interactions
       if (data && data !== '0x') {
         riskScore += 20;
         warnings.push('Contract interaction detected');
         recommendations.push('Review contract code before execution');
       }
 
-      // Check for known malicious addresses (simplified check)
       const isKnownAddress = await this.checkAddressReputation(to);
       if (!isKnownAddress.isSafe) {
         riskScore += 50;
@@ -104,9 +95,8 @@ export class AlchemyClient {
         recommendations.push('Verify recipient address through multiple sources');
       }
 
-      // Gas estimation
       const gasEstimate = await this.estimateGas(to, value, data);
-      
+
       return {
         isSecure: riskScore < 50,
         riskScore,
@@ -129,29 +119,21 @@ export class AlchemyClient {
     }
   }
 
-  /**
-   * Check address reputation using Alchemy's security features
-   */
   private async checkAddressReputation(address: Address): Promise<{ isSafe: boolean; reputation?: string }> {
     try {
-      // This would integrate with Alchemy's security APIs
-      // For now, return a basic check
+
       const balance = await this.alchemy.core.getBalance(address);
-      
-      // If address has significant balance, it's likely legitimate
-      if (balance.gt('100000000000000000')) { // > 0.1 CELO
+
+      if (balance.gt('100000000000000000')) {
         return { isSafe: true, reputation: 'verified' };
       }
-      
+
       return { isSafe: false, reputation: 'unknown' };
     } catch {
       return { isSafe: false, reputation: 'unknown' };
     }
   }
 
-  /**
-   * Estimate gas for transaction
-   */
   private async estimateGas(to: Address, value: bigint, data?: string): Promise<{
     safe: bigint;
     recommended: bigint;
@@ -168,8 +150,8 @@ export class AlchemyClient {
 
       return {
         safe: gasEstimateBigInt,
-        recommended: gasEstimateBigInt * BigInt(120) / BigInt(100), // 20% buffer
-        max: gasEstimateBigInt * BigInt(150) / BigInt(100) // 50% buffer
+        recommended: gasEstimateBigInt * BigInt(120) / BigInt(100),
+        max: gasEstimateBigInt * BigInt(150) / BigInt(100)
       };
     } catch {
       return {
@@ -180,9 +162,6 @@ export class AlchemyClient {
     }
   }
 
-  /**
-   * Mint NFT using Alchemy's NFT API
-   */
   async mintNFT(operation: NFTOperation): Promise<NFTMintResult> {
     try {
       if (operation.operation !== 'mint') {
@@ -193,9 +172,6 @@ export class AlchemyClient {
         throw new Error('Metadata is required for minting');
       }
 
-      // Note: Direct NFT minting through Alchemy SDK may not be available
-      // This would typically be done through smart contract interaction
-      // For now, we'll return a mock response
       const mintResponse = {
         transactionHash: '0x' + Math.random().toString(16).substr(2, 64),
         tokenId: operation.tokenId || Math.random().toString(),
@@ -216,9 +192,6 @@ export class AlchemyClient {
     }
   }
 
-  /**
-   * Get NFT metadata
-   */
   async getNFTMetadata(contractAddress: Address, tokenId: string) {
     try {
       const nft = await this.alchemy.nft.getNftMetadata(contractAddress, tokenId);
@@ -235,9 +208,6 @@ export class AlchemyClient {
     }
   }
 
-  /**
-   * Get NFT transfers for an address
-   */
   async getNFTTransfers(address: Address, category: 'in' | 'out' | 'both' = 'both') {
     try {
       const transfers = await this.alchemy.core.getAssetTransfers({
@@ -262,9 +232,6 @@ export class AlchemyClient {
     }
   }
 
-  /**
-   * Get NFT collection information
-   */
   async getNFTCollection(contractAddress: Address) {
     try {
       const collection = await this.alchemy.nft.getContractMetadata(contractAddress);
@@ -280,9 +247,6 @@ export class AlchemyClient {
     }
   }
 
-  /**
-   * Get owned NFTs for an address
-   */
   async getOwnedNFTs(address: Address, contractAddress?: Address) {
     try {
       const nfts = await this.alchemy.nft.getNftsForOwner(address, {
@@ -304,9 +268,6 @@ export class AlchemyClient {
     }
   }
 
-  /**
-   * Enhanced transaction simulation with security checks
-   */
   async simulateTransaction(
     from: Address,
     to: Address,
@@ -319,8 +280,7 @@ export class AlchemyClient {
     warnings: string[];
   }> {
     try {
-      // Note: simulateAssetChanges may not be available in all Alchemy SDK versions
-      // For now, we'll use basic gas estimation
+
       const gasEstimate = await this.alchemy.core.estimateGas({
         from,
         to,

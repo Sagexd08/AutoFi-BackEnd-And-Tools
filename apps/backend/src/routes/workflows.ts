@@ -84,7 +84,7 @@ router.post('/', async (req, res, next) => {
     }
 
     let id: string;
-    
+
     if (workflow.id) {
       if (workflows.has(workflow.id)) {
         return res.status(409).json({
